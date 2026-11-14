@@ -97,6 +97,9 @@
 
 - Перед коммитом: `./gradlew detekt detektMain :app:assembleDebug testDebugUnitTest` — ровно то,
   что гоняет CI. `detektMain` с type resolution ловит больше обычного `detekt`.
+- iOS и tvOS собирает отдельная macOS-джоба `ios-build.yml` на PR с правками `iosApp`, `shared`,
+  `data` и сборки. Код `commonMain` должен компилироваться и на Kotlin/Native: на JVM API вроде
+  `kotlin.io.use` проходит молча, а под iOS падает.
 - UI проверяется вживую на mock-сборке: `./gradlew :app:installMock` — без бэкенда kino.pub и
   без входа, данные из `:data:fake` (опорные id — в `FakeIds`: сериал на 7 сезонов, серии без
   кадров, подборка на 45 тайтлов). Живой kino.pub на эмуляторах упирается во вход и режется DPI.

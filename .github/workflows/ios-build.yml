@@ -1,0 +1,99 @@
+name: iOS Build
+
+# Собирает iPhone- и Apple TV-приложение на macOS-раннере. Основной CI гоняет только Android на
+# Linux, поэтому ошибки, видные лишь на Kotlin/Native или в Swift (забытый импорт, JVM-only API в
+# commonMain), раньше доходили до master незамеченными. Здесь — только компиляция под симулятор:
+# без подписи, тестов и запуска.
+on:
+  push:
+    branches: [ master ]
+    paths: &ios-paths
+      - "iosApp/**"
+      - "shared/**"
+      - "core/domain/**"
+      - "core/network/**"
+      - "data/**"
+      - "build-logic/**"
+      - "gradle/**"
+      - "*.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/ios-build.yml"
+  pull_request:
+    branches: [ master ]
+    paths: *ios-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.scheme }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scheme: Filmax
+            destination: generic/platform=iOS Simulator
+          - scheme: Filmax-tvOS
+            destination: generic/platform=tvOS Simulator
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Тот же Xcode, на котором приложение проверено вживую. Kotlin 2.0.21 официально знает
+      # Xcode 16, на 26.2 собирается; более новый Xcode берём, только если 26.2 с образа уберут.
+      - name: Select Xcode
+        run: |
+          xcode=/Applications/Xcode_26.2.app
+          if [ ! -d "$xcode" ]; then
+            xcode=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n1)
+          fi
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Тулчейн Kotlin/Native (~1 ГБ) лежит вне Gradle-кеша; без своего кеша он скачивается
+      # заново на каждый прогон.
+      - name: Cache Kotlin/Native toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: iosApp
+        run: xcodegen generate
+
+      # Фреймворк Shared собирает preBuildScript таргета (embedAndSignAppleFrameworkForXcode),
+      # ему нужен Android SDK: у :shared есть androidTarget. На образе он есть — ANDROID_HOME.
+      # ARCHS=arm64 — раннер на Apple Silicon; иначе generic-сборка под симулятор тянула бы и
+      # x86_64, и Kotlin/Native компилировал бы фреймворк дважды.
+      - name: Build ${{ matrix.scheme }}
+        run: |
+          xcodebuild \
+            -project iosApp/Filmax.xcodeproj \
+            -scheme "${{ matrix.scheme }}" \
+            -configuration Debug \
+            -destination "${{ matrix.destination }}" \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet \
+            build

@@ -41,8 +41,10 @@ Apple-приложения Filmax на iPhone/iPad и Apple TV — те же р�
    Перед сборкой прогоняется `:shared:embedAndSignAppleFrameworkForXcode` (preBuildScript в `project.yml`).
 3. Для устройства — `DEVELOPMENT_TEAM` в `project.yml`.
 
-Swift-код в репозитории собирается только на Mac: в CI и в Linux-окружении проверяется Kotlin-часть
-(`./gradlew :shared:testDebugUnitTest`). После правок общего слоя соберите обе схемы.
+Swift-код собирается только на macOS. В CI обе схемы собирает отдельная джоба на macOS-раннере
+(`.github/workflows/ios-build.yml`, под симулятор, без подписи), она запускается на PR, которые
+трогают `iosApp`, `shared`, `data` или сборку. Запускать приложение и смотреть UI всё равно нужно
+на Mac. В Linux-окружении проверяется только Kotlin-часть (`./gradlew :shared:testDebugUnitTest`).
 
 ## Заметки по интеропу (проверено на Mac)
 
