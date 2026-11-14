@@ -11,14 +11,15 @@ struct MineView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DS.Spacing.md) {
-                Picker("Раздел", selection: $viewModel.segment) {
-                    ForEach(viewModel.segments) { segment in Text(segment.rawValue).tag(segment) }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, DS.Spacing.md)
+                ContentSizedSegments(options: viewModel.segments, title: { $0.rawValue }, selection: $viewModel.segment)
+                    .padding(.horizontal, DS.Spacing.md)
+                // Раздел сменяется растворением, а не подменой списка рывком.
                 segmentContent
+                    .id(viewModel.segment)
+                    .transition(.opacity)
             }
             .padding(.vertical, DS.Spacing.sm)
+            .animation(Motion.swap, value: viewModel.segment)
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Моё")
@@ -62,7 +63,7 @@ struct MineView: View {
                     NavigationLink(value: AppRoute.player(itemId: entry.itemId, target: entry.target)) {
                         HistoryRow(entry: entry)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableCard)
                     .contextMenu {
                         NavigationLink(value: AppRoute.details(itemId: entry.itemId)) { Label("Подробнее", systemImage: "info.circle") }
                         Button(role: .destructive) {
@@ -85,7 +86,7 @@ struct MineView: View {
                         PosterCard(posterURL: entry.posterSmall, title: entry.title, subtitle: entry.year > 0 ? "\(entry.year)" : nil,
                                    ratingText: ratingLabel(entry.rating?.doubleValue), width: 108)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableCard)
                     .contextMenu {
                         Button(role: .destructive) {
                             Task { await viewModel.removeFromWatchlist(entry.id) }
@@ -106,7 +107,7 @@ struct MineView: View {
                     NavigationLink(value: AppRoute.folder(id: folder.id, title: folder.title)) {
                         FolderRow(folder: folder, posters: viewModel.folderPosters[folder.id] ?? [])
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableCard)
                     .contextMenu {
                         Button(role: .destructive) {
                             Task { await viewModel.delete(folder: folder) }
@@ -156,7 +157,6 @@ private struct FolderRow: View {
             Image(systemName: "chevron.right").foregroundColor(Theme.onSurfaceVariant)
         }
         .padding(DS.Spacing.sm)
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md))
+        .glassSurface(RoundedRectangle(cornerRadius: DS.Radius.md), interactive: true)
     }
 }

@@ -180,10 +180,11 @@ struct TvFillImage: View {
     var placeholderIcon: String = "film"
 
     var body: some View {
-        AsyncImage(url: URL(string: url ?? "")) { phase in
+        // Загруженная картинка проявляется поверх заглушки: на большом экране вспышка заметнее всего.
+        AsyncImage(url: URL(string: url ?? ""), transaction: Transaction(animation: Motion.reveal)) { phase in
             switch phase {
             case .success(let image):
-                image.resizable().scaledToFill()
+                image.resizable().scaledToFill().transition(.opacity)
             default:
                 placeholder
             }
@@ -258,8 +259,7 @@ struct TvRatingBadge: View {
         .foregroundColor(.white)
         .padding(.horizontal, DS.Spacing.sm)
         .padding(.vertical, DS.Spacing.xs)
-        .background(.black.opacity(0.65))
-        .clipShape(Capsule())
+        .glassSurface(Capsule())
     }
 }
 

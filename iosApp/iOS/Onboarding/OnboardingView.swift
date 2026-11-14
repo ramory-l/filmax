@@ -29,6 +29,7 @@ struct OnboardingView: View {
                     sourceLabel(title: "Домашний сервер", detail: "Jellyfin в вашей сети, без подписки", systemImage: "server.rack")
                 }
             }
+            .buttonStyle(.pressableCard)
             .padding(DS.Spacing.lg)
             .background(Theme.background.ignoresSafeArea())
         }
@@ -44,10 +45,12 @@ struct OnboardingView: View {
             Spacer()
             Image(systemName: "chevron.right").foregroundColor(Theme.onSurfaceVariant)
         }
+        // Подпись ссылки по умолчанию центрирует многострочный текст — вторая строка описания
+        // уезжала на середину карточки.
+        .multilineTextAlignment(.leading)
         .foregroundColor(Theme.text)
         .padding(DS.Spacing.md)
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md))
+        .glassSurface(RoundedRectangle(cornerRadius: DS.Radius.md), interactive: true)
     }
 }
 

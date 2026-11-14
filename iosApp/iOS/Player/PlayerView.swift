@@ -35,5 +35,47 @@ private struct PlayerScreen: View {
                 viewModel.item?.isEpisodic == true ? "\(viewModel.item?.title ?? "") · \(track.episodeCode)" : viewModel.item?.title ?? ""
             } ?? "")
             .navigationBarTitleDisplayMode(.inline)
+            // Качество и следующая серия — в панели навигации рядом с «назад»: поверх видео они
+            // налезали на кнопки AVKit (AirPlay, звук), которые тот рисует в том же углу.
+            .toolbar {
+                // Название и серия — двумя строками: в одну строку рядом с кнопками номер серии
+                // обрезался первым, а он здесь важнее всего.
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 0) {
+                        Text(viewModel.item?.title ?? "").font(.headline).lineLimit(1)
+                        if viewModel.item?.isEpisodic == true, let track = viewModel.track {
+                            Text(track.episodeCode).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isHeader)
+                }
+                ToolbarItemGroup(placement: .primaryAction) {
+                    if viewModel.qualities.count > 1 { qualityMenu }
+                    if let next = viewModel.nextTarget {
+                        Button { onNext(next) } label: { Image(systemName: "forward.end.fill") }
+                            .accessibilityLabel("Следующая серия")
+                    }
+                }
+            }
+    }
+
+    private var qualityMenu: some View {
+        Menu {
+            ForEach(viewModel.qualities, id: \.self) { quality in
+                Button {
+                    Task { await viewModel.select(quality: quality) }
+                } label: {
+                    if quality == viewModel.currentQuality {
+                        Label(quality, systemImage: "checkmark")
+                    } else {
+                        Text(quality)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "slider.horizontal.3")
+        }
+        .accessibilityLabel("Качество")
     }
 }

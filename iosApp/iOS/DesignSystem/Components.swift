@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Shared
 
 // Базовые SwiftUI-компоненты Filmax для iPhone/iPad (аналог `core:designsystem`/`core:ui`).
@@ -82,12 +83,63 @@ struct RatingBadge: View {
         .foregroundColor(.white)
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
-        .background(.black.opacity(0.65))
-        .clipShape(Capsule())
+        .glassSurface(Capsule())
     }
 }
 
-// MARK: - FilmaxButton
+// MARK: - Кнопки
+
+/// Роль кнопки действия: главное — акцентом, остальные — стеклом.
+enum FilmaxActionRole {
+    case primary, secondary
+}
+
+extension View {
+    /// Кнопки действий («Смотреть», «Буду смотреть», «В папку»). На iOS 26 — Liquid Glass: главная —
+    /// акцентное стекло, остальные — прозрачное; раньше — заливка и контур iOS.
+    @ViewBuilder func filmaxActionStyle(_ role: FilmaxActionRole) -> some View {
+        if #available(iOS 26, *) {
+            switch role {
+            case .primary: buttonStyle(.glassProminent).tint(Theme.accent)
+            case .secondary: buttonStyle(.glass).foregroundStyle(Theme.text)
+            }
+        } else {
+            switch role {
+            case .primary: buttonStyle(.borderedProminent).tint(Theme.accent)
+            case .secondary: buttonStyle(.bordered).tint(Theme.text)
+            }
+        }
+    }
+
+    /// Отклик переключателя («Буду смотреть»): иконка перетекает в новую, телефон отвечает лёгким
+    /// щелчком. С iOS 17; раньше смена просто мгновенная.
+    @ViewBuilder func toggleFeedback(_ isOn: Bool) -> some View {
+        if #available(iOS 17, *) {
+            contentTransition(.symbolEffect(.replace))
+                .sensoryFeedback(.selection, trigger: isOn)
+                .animation(Motion.press, value: isOn)
+        } else {
+            self
+        }
+    }
+}
+
+/// Карточка-ссылка: при нажатии утапливается и пружинит обратно — отклик, как у карточек App Store.
+struct PressableCardStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? Self.pressedScale : 1)
+            .opacity(configuration.isPressed ? Self.pressedOpacity : 1)
+            .animation(Motion.press, value: configuration.isPressed)
+    }
+
+    private static let pressedScale: CGFloat = 0.96
+    private static let pressedOpacity: Double = 0.85
+}
+
+extension ButtonStyle where Self == PressableCardStyle {
+    static var pressableCard: PressableCardStyle { PressableCardStyle() }
+}
 
 /// Основная/второстепенная кнопка Filmax с акцентом дизайн-системы.
 struct FilmaxButton: View {
@@ -98,21 +150,16 @@ struct FilmaxButton: View {
     let action: () -> Void
 
     var body: some View {
-        let label = HStack(spacing: DS.Spacing.sm) {
-            if let systemImage { Image(systemName: systemImage) }
-            Text(title).fontWeight(.semibold)
+        Button(action: action) {
+            HStack(spacing: DS.Spacing.sm) {
+                if let systemImage { Image(systemName: systemImage) }
+                Text(title).fontWeight(.semibold)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
-
-        switch style {
-        case .primary:
-            Button(action: action) { label }
-                .buttonStyle(.borderedProminent).tint(Theme.accent).controlSize(.large)
-        case .secondary:
-            Button(action: action) { label }
-                .buttonStyle(.bordered).tint(Theme.accent).controlSize(.large)
-        }
+        .filmaxActionStyle(style == .primary ? .primary : .secondary)
+        .controlSize(.large)
     }
 }
 
@@ -229,7 +276,7 @@ struct ItemRail: View {
                         NavigationLink(value: AppRoute.details(itemId: item.id)) {
                             PosterCard(posterURL: item.posterURL, title: item.title, subtitle: item.posterMeta, ratingText: item.ratingText)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressableCard)
                         .onAppear { if item.id == items.last?.id { onReachEnd?() } }
                     }
                 }
@@ -252,11 +299,187 @@ struct ItemGrid: View {
                 NavigationLink(value: AppRoute.details(itemId: item.id)) {
                     PosterCard(posterURL: item.posterURL, title: item.title, subtitle: item.posterMeta, ratingText: item.ratingText, width: 108)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressableCard)
                 .onAppear { if item.id == items.last?.id { onReachEnd?() } }
             }
         }
         .padding(.horizontal, DS.Spacing.md)
+    }
+}
+
+// MARK: - Лента с кадром
+
+/// Лента с кадром под статус-баром — Главная и Детали. Пока лента вверху, панель навигации прозрачна
+/// и кадр лежит под часами; стоит прокрутить — панель получает подложку и заголовок. Без этого текст
+/// ленты проезжал под часами и кнопкой «назад» без всякого фона.
+struct HeroScroll<Content: View>: View {
+    private let title: String
+    private let underBar: Bool
+    private let content: Content
+    @State private var scrolled = false
+
+    /// [underBar] — лента начинается кадром и уходит под статус-бар; без кадра ей там делать нечего:
+    /// под часами оказался бы заголовок ряда.
+    init(title: String, underBar: Bool = true, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.underBar = underBar
+        self.content = content()
+    }
+
+    var body: some View {
+        ScrollView {
+            content.background(alignment: .top) {
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: HeroScrollOffsetKey.self,
+                        value: -proxy.frame(in: .named(Self.coordinateSpace)).minY
+                    )
+                }
+            }
+        }
+        .coordinateSpace(name: Self.coordinateSpace)
+        .ignoresSafeArea(edges: underBar ? .top : [])
+        .modifier(ScrollOffsetObserver { offset in
+            let reached = offset > Self.revealOffset
+            if reached != scrolled {
+                withAnimation(.easeInOut(duration: 0.25)) { scrolled = reached }
+            }
+        })
+        .navigationTitle(scrolled ? title : "")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.regularMaterial, for: .navigationBar)
+        .toolbarBackground(scrolled ? .visible : .hidden, for: .navigationBar)
+    }
+
+    private static var coordinateSpace: String { "heroScroll" }
+
+    /// Панель проявляется, едва шапка начинает уходить под неё: дальше под часы поехал бы её текст.
+    /// Небольшой запас — чтобы панель не мигала от лёгкого касания ленты.
+    private static var revealOffset: CGFloat { 24 }
+}
+
+private struct HeroScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+/// Смещение ленты от верха. С iOS 18 — `onScrollGeometryChange`: геометрия содержимого в iOS 26
+/// при прокрутке не пересчитывается, и панель так и не проявлялась. До iOS 18 — по ней же, другого
+/// способа там нет.
+private struct ScrollOffsetObserver: ViewModifier {
+    let action: (CGFloat) -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18, *) {
+            content.onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, offset in
+                action(offset)
+            }
+        } else {
+            content.onPreferenceChange(HeroScrollOffsetKey.self, perform: action)
+        }
+    }
+}
+
+/// Кадр шапки во всю ширину (Главная, Детали): снизу уходит в фон, чтобы текст поверх читался на
+/// любом кадре, сверху притемнён — шапка лежит под часами статус-бара. Затемнения стоят на месте,
+/// а сам кадр двигается с лентой (`HeroMotion`).
+struct HeroBackdrop: View {
+    let url: String?
+    let aspectRatio: CGFloat
+
+    var body: some View {
+        PosterImage(url: url)
+            .aspectRatio(aspectRatio, contentMode: .fill)
+            .frame(maxWidth: .infinity)
+            .clipped()
+            .modifier(HeroMotion())
+            .overlay(LinearGradient(colors: [.clear, Theme.background], startPoint: .center, endPoint: .bottom))
+            .overlay(
+                LinearGradient(
+                    colors: [Theme.background.opacity(0.7), .clear],
+                    startPoint: .top,
+                    endPoint: UnitPoint(x: 0.5, y: 0.3)
+                )
+            )
+    }
+}
+
+/// Движение кадра шапки: потянули ленту вниз — кадр растягивается вверх и не отрывается от края;
+/// листают вверх — уезжает медленнее ленты (параллакс), как шапки приложений Apple. С iOS 17
+/// (`visualEffect` не трогает раскладку и не пересчитывает ленту на каждом кадре); раньше кадр
+/// просто едет с лентой.
+private struct HeroMotion: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) {
+            content.visualEffect { effect, proxy in
+                let top = proxy.frame(in: .scrollView).minY
+                let pull = max(top, 0)
+                return effect
+                    .scaleEffect(1 + pull / max(proxy.size.height, 1), anchor: .bottom)
+                    .offset(y: -min(top, 0) * Self.parallax)
+            }
+        } else {
+            content
+        }
+    }
+
+    /// Доля прокрутки, на которую кадр отстаёт от ленты.
+    private static let parallax: CGFloat = 0.4
+}
+
+// MARK: - Сегменты
+
+/// Сегменты разделов с шириной по подписи. `Picker(.segmented)` делит ширину поровну, и длинная
+/// подпись («Буду смотреть») обрезалась, хотя короткие соседи («Папки») оставляли место. Раздавать
+/// ширину по содержимому умеет только `UISegmentedControl` — отсюда обёртка над ним.
+struct ContentSizedSegments<Value: Hashable>: UIViewRepresentable {
+    let options: [Value]
+    let title: (Value) -> String
+    @Binding var selection: Value
+
+    func makeUIView(context: Context) -> UISegmentedControl {
+        let control = UISegmentedControl()
+        control.apportionsSegmentWidthsByContent = true
+        control.addAction(UIAction { [coordinator = context.coordinator] action in
+            guard let control = action.sender as? UISegmentedControl else { return }
+            coordinator.select(index: control.selectedSegmentIndex)
+        }, for: .valueChanged)
+        return control
+    }
+
+    func updateUIView(_ control: UISegmentedControl, context: Context) {
+        context.coordinator.parent = self
+        let titles = options.map(title)
+        let current = (0..<control.numberOfSegments).map { control.titleForSegment(at: $0) ?? "" }
+        if current != titles {
+            control.removeAllSegments()
+            for (index, segmentTitle) in titles.enumerated() {
+                control.insertSegment(withTitle: segmentTitle, at: index, animated: false)
+            }
+        }
+        control.selectedSegmentIndex = options.firstIndex(of: selection) ?? UISegmentedControl.noSegment
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    final class Coordinator {
+        var parent: ContentSizedSegments
+
+        init(parent: ContentSizedSegments) {
+            self.parent = parent
+        }
+
+        func select(index: Int) {
+            guard parent.options.indices.contains(index) else { return }
+            parent.selection = parent.options[index]
+        }
     }
 }
 
@@ -272,10 +495,10 @@ struct FilterChip: View {
                 .font(.system(size: 14, weight: .semibold))
                 .padding(.horizontal, DS.Spacing.md)
                 .padding(.vertical, DS.Spacing.sm)
-                .background(selected ? Theme.accent : Theme.surfaceHigh)
                 .foregroundColor(.white)
-                .clipShape(Capsule())
+                .glassSurface(Capsule(), tint: selected ? Theme.accent : nil, interactive: true)
+                .animation(Motion.press, value: selected)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableCard)
     }
 }

@@ -94,7 +94,8 @@ struct TvEpisodesSection: View {
         VStack(alignment: .leading, spacing: 0) {
             if item.seasonNumbers.count > 1 {
                 TvChipRow(options: seasonOptions, selected: viewModel.selectedSeason) { season in
-                    viewModel.selectedSeason = season
+                    // Серии другого сезона растворяются на месте прежних, а не подменяются рывком.
+                    withAnimation(Motion.swap) { viewModel.selectedSeason = season }
                 }
             }
             TvRail(railTitle) {

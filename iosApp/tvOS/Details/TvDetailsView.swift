@@ -14,6 +14,7 @@ struct TvDetailsView: View {
 
     var body: some View {
         content
+            .revealOnLoad(viewModel.item != nil)
             .background(Theme.background.ignoresSafeArea())
             // Перечитывается при каждом возврате: после плеера у серий новый прогресс, а главная
             // кнопка — уже «Продолжить» следующей серии.
@@ -42,7 +43,7 @@ private struct TvDetailsContent: View {
     let showFolders: () -> Void
 
     var body: some View {
-        TvScreenScroll {
+        TvScreenScroll(underTabBar: true) {
             TvDetailsHeader(item: item, viewModel: viewModel, showFolders: showFolders)
             // По типу, а не по числу видео: у фильма их тоже бывает несколько, и модель отдаёт их
             // как «серии» сезона 0.

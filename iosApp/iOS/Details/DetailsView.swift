@@ -21,15 +21,15 @@ struct DetailsView: View {
                 LoadingView()
             }
         }
+        .revealOnLoad(viewModel.item != nil)
         .background(Theme.background.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $foldersOpen) { FolderPickerSheet(viewModel: viewModel) }
         .task { if viewModel.item == nil { await viewModel.load() } }
         .task { await viewModel.observeWatchlist() }
     }
 
     private func content(_ item: Item) -> some View {
-        ScrollView {
+        HeroScroll(title: item.title) {
             VStack(alignment: .leading, spacing: DS.Spacing.lg) {
                 DetailsHeader(item: item)
                 actions(item)
@@ -42,7 +42,6 @@ struct DetailsView: View {
             }
             .padding(.bottom, DS.Spacing.xl)
         }
-        .ignoresSafeArea(edges: .top)
     }
 
     private func actions(_ item: Item) -> some View {
@@ -50,26 +49,26 @@ struct DetailsView: View {
             NavigationLink(value: AppRoute.player(itemId: item.id, target: viewModel.playTarget)) {
                 Label(viewModel.playTitle, systemImage: "play.fill").frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
+            .filmaxActionStyle(.primary)
             HStack(spacing: DS.Spacing.sm) {
                 Button {
                     Task { await viewModel.toggleWatchlist() }
                 } label: {
                     Label(viewModel.inWatchlist ? "В списке" : "Буду смотреть",
                           systemImage: viewModel.inWatchlist ? "bookmark.fill" : "bookmark")
+                        .toggleFeedback(viewModel.inWatchlist)
                         .frame(maxWidth: .infinity)
                 }
                 // Папок у домашнего сервера нет — кнопки тоже нет, а не ошибка после нажатия.
                 if viewModel.foldersAvailable {
                     Button { foldersOpen = true } label: {
                         Label("В папку", systemImage: viewModel.itemFolders.isEmpty ? "folder.badge.plus" : "folder.fill")
+                            .toggleFeedback(viewModel.itemFolders.isEmpty)
                             .frame(maxWidth: .infinity)
                     }
                 }
             }
-            .buttonStyle(.bordered)
-            .tint(Theme.text)
+            .filmaxActionStyle(.secondary)
         }
         .controlSize(.large)
         .padding(.horizontal, DS.Spacing.md)
@@ -82,11 +81,7 @@ private struct DetailsHeader: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            PosterImage(url: item.backdropURL)
-                .aspectRatio(16 / 10, contentMode: .fill)
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .overlay(LinearGradient(colors: [.clear, Theme.background], startPoint: .center, endPoint: .bottom))
+            HeroBackdrop(url: item.backdropURL, aspectRatio: 16 / 10)
             VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 Text(item.type.label.uppercased()).font(.caption.weight(.bold)).foregroundColor(Theme.accent)
                 Text(item.title).font(.system(size: 28, weight: .bold)).foregroundColor(Theme.text)
@@ -114,7 +109,7 @@ private struct EpisodesSection: View {
                 HStack(spacing: DS.Spacing.sm) {
                     ForEach(item.seasonNumbers, id: \.self) { season in
                         FilterChip(title: "Сезон \(season)", selected: viewModel.selectedSeason == season) {
-                            viewModel.selectedSeason = season
+                            withAnimation(Motion.swap) { viewModel.selectedSeason = season }
                         }
                     }
                 }
@@ -125,9 +120,12 @@ private struct EpisodesSection: View {
                     NavigationLink(value: AppRoute.player(itemId: item.id, target: episode.target)) {
                         EpisodeRow(episode: episode)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableCard)
                 }
             }
+            // Список другого сезона растворяется на месте прежнего, а не подменяется рывком.
+            .id(viewModel.selectedSeason)
+            .transition(.opacity)
             .padding(.horizontal, DS.Spacing.md)
         }
     }
@@ -177,6 +175,7 @@ private struct PeopleSection: View {
                             NavigationLink(value: AppRoute.filmography(name: name, isDirector: false)) { personChip(name, role: nil) }
                         }
                     }
+                    .buttonStyle(.pressableCard)
                     .padding(.horizontal, DS.Spacing.md)
                 }
             }
@@ -190,8 +189,7 @@ private struct PeopleSection: View {
         }
         .padding(.horizontal, DS.Spacing.md)
         .padding(.vertical, DS.Spacing.sm)
-        .background(Theme.surface)
-        .clipShape(Capsule())
+        .glassSurface(Capsule(), interactive: true)
     }
 }
 

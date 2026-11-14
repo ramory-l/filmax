@@ -7,10 +7,11 @@ struct PosterImage: View {
     var placeholderIcon: String = "film"
 
     var body: some View {
-        AsyncImage(url: URL(string: url ?? "")) { phase in
+        // Загруженная картинка проявляется поверх заглушки, а не вспыхивает.
+        AsyncImage(url: URL(string: url ?? ""), transaction: Transaction(animation: Motion.reveal)) { phase in
             switch phase {
             case .success(let image):
-                image.resizable()
+                image.resizable().transition(.opacity)
             default:
                 ZStack {
                     Theme.surface

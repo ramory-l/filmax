@@ -16,19 +16,19 @@ struct HomeView: View {
                 LoadingView()
             }
         }
+        .revealOnLoad(viewModel.feed?.hasContent == true)
         .background(Theme.background.ignoresSafeArea())
-        .navigationTitle("Главная")
-        .toolbar(.hidden, for: .navigationBar)
         .task { if viewModel.feed == nil { await viewModel.load() } }
         .task { await viewModel.observeWatchlist() }
         .refreshable { await viewModel.load() }
     }
 
     private func content(_ feed: HomeFeed) -> some View {
-        ScrollView {
+        HeroScroll(title: "Главная", underBar: feed.hero != nil) {
             LazyVStack(alignment: .leading, spacing: DS.Spacing.xl) {
-                if feed.fromCache { OfflineBanner() }
                 if let hero = feed.hero { HeroCard(item: hero, viewModel: viewModel) }
+                // Под героем, а не над ним: верх ленты лежит под часами статус-бара.
+                if feed.fromCache { OfflineBanner() }
                 if !feed.continueWatching.isEmpty { ContinueRail(entries: feed.continueWatching) }
                 if !feed.fresh.isEmpty { ItemRail(title: "Новинки", items: feed.fresh) }
                 if !feed.trending.isEmpty { ItemRail(title: "Популярные фильмы", items: feed.trending) }
@@ -52,11 +52,7 @@ private struct HeroCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            PosterImage(url: item.backdropURL)
-                .aspectRatio(16 / 10, contentMode: .fill)
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .overlay(LinearGradient(colors: [.clear, Theme.background], startPoint: .center, endPoint: .bottom))
+            HeroBackdrop(url: item.backdropURL, aspectRatio: Self.aspectRatio)
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 Text(item.title).font(.system(size: 28, weight: .bold)).foregroundColor(Theme.text)
                 Text(item.metaLine).font(.subheadline).foregroundColor(Theme.textSecondary)
@@ -64,17 +60,16 @@ private struct HeroCard: View {
                     NavigationLink(value: AppRoute.player(itemId: item.id, target: nil)) {
                         Label("Смотреть", systemImage: "play.fill").frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.accent)
+                    .filmaxActionStyle(.primary)
                     let marked = viewModel.watchlistIds.contains(item.id)
                     Button {
                         Task { await viewModel.toggleWatchlist(item) }
                     } label: {
                         Label(marked ? "В списке" : "Буду смотреть", systemImage: marked ? "bookmark.fill" : "bookmark")
+                            .toggleFeedback(marked)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-                    .tint(Theme.text)
+                    .filmaxActionStyle(.secondary)
                 }
                 .controlSize(.large)
                 NavigationLink(value: AppRoute.details(itemId: item.id)) {
@@ -85,6 +80,10 @@ private struct HeroCard: View {
             .padding(DS.Spacing.md)
         }
     }
+
+    /// Кадр почти квадратный: шапка лежит под часами, и текст с кнопками должен лечь ниже них, а
+    /// не тесниться под статус-баром, как было бы в широких 16:10.
+    private static let aspectRatio: CGFloat = 1
 }
 
 /// «Продолжить» ведёт сразу в плеер — на недосмотренную серию.
@@ -100,7 +99,7 @@ private struct ContinueRail: View {
                         NavigationLink(value: AppRoute.player(itemId: entry.itemId, target: entry.target)) {
                             ContinueCard(entry: entry)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressableCard)
                     }
                 }
                 .padding(.horizontal, DS.Spacing.md)
@@ -147,7 +146,7 @@ private struct CollectionsRail: View {
                         NavigationLink(value: AppRoute.collection(id: collection.id, title: collection.title)) {
                             PosterCard(posterURL: collection.posterURL, title: collection.title, width: 150)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressableCard)
                     }
                 }
                 .padding(.horizontal, DS.Spacing.md)

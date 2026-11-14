@@ -33,7 +33,7 @@ struct CollectionsView: View {
                     NavigationLink(value: AppRoute.collection(id: collection.id, title: collection.title)) {
                         PosterCard(posterURL: collection.posterURL, title: collection.title, width: 130)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableCard)
                     .onAppear {
                         if collection.id == viewModel.collections.last?.id {
                             Task { await viewModel.loadNext() }
@@ -92,7 +92,7 @@ struct CollectionDetailView: View {
                             width: 110
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableCard)
                     .onAppear {
                         if item.id == viewModel.items.last?.id {
                             Task { await viewModel.loadNext() }

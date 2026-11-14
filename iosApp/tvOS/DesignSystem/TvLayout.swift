@@ -10,9 +10,13 @@ import Shared
 /// Вертикальная лента экрана во всю ширину: системный боковой отступ снят, его роль играют поля
 /// рядов. Иначе отступы складывались бы, а прокрученные ряды обрезались посреди экрана.
 struct TvScreenScroll<Content: View>: View {
+    private let underTabBar: Bool
     private let content: Content
 
-    init(@ViewBuilder content: () -> Content) {
+    /// [underTabBar] — лента начинается кадром (Главная, Детали) и уходит под стеклянную панель
+    /// вкладок, как в приложениях Apple TV; без кадра под панелью оказался бы текст.
+    init(underTabBar: Bool = false, @ViewBuilder content: () -> Content) {
+        self.underTabBar = underTabBar
         self.content = content()
     }
 
@@ -24,7 +28,7 @@ struct TvScreenScroll<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, DS.tvSafeVertical)
         }
-        .ignoresSafeArea(.container, edges: .horizontal)
+        .ignoresSafeArea(.container, edges: underTabBar ? [.horizontal, .top] : .horizontal)
         .background(Theme.background.ignoresSafeArea())
     }
 }
@@ -115,14 +119,25 @@ enum TvActionRole {
 }
 
 extension View {
-    /// Системные tvOS-кнопки: фокус, подъём и звук штатные. Роль кнопки постоянна — стиль по смене
-    /// состояния менять нельзя: смена типа стиля пересоздаёт кнопку, и фокус с неё слетает.
+    /// Системные tvOS-кнопки: фокус, подъём и звук штатные. На tvOS 26 — Liquid Glass: главная —
+    /// акцентное стекло, остальные — прозрачное, как кнопки приложений Apple TV. Роль кнопки
+    /// постоянна — стиль по смене состояния менять нельзя: смена типа стиля пересоздаёт кнопку, и
+    /// фокус с неё слетает (проверка версии системы постоянна и этого не задевает).
     @ViewBuilder func tvActionStyle(_ role: TvActionRole) -> some View {
-        switch role {
-        case .primary:
-            buttonStyle(.borderedProminent).tint(Theme.accent)
-        case .secondary:
-            buttonStyle(.bordered)
+        if #available(tvOS 26, *) {
+            switch role {
+            case .primary:
+                buttonStyle(.glassProminent).tint(Theme.accent)
+            case .secondary:
+                buttonStyle(.glass)
+            }
+        } else {
+            switch role {
+            case .primary:
+                buttonStyle(.borderedProminent).tint(Theme.accent)
+            case .secondary:
+                buttonStyle(.bordered)
+            }
         }
     }
 }
@@ -144,13 +159,27 @@ struct TvChip: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: DS.Spacing.sm) {
-                if isSelected { Image(systemName: "checkmark") }
-                Text(title)
-            }
+            TvChipLabel(title: title, isSelected: isSelected)
         }
         .buttonStyle(.bordered)
         .tint(isSelected ? Theme.accent : nil)
+    }
+}
+
+/// Подпись чипа с явным цветом: `.bordered` с акцентным `tint` в tvOS 26 красит акцентом и подложку,
+/// и текст, — выбранный чип без фокуса становился пустой фиолетовой плашкой. В фокусе подложка
+/// штатно белая, поэтому текст тёмный; без фокуса — белый и на акценте, и на стекле.
+private struct TvChipLabel: View {
+    let title: String
+    let isSelected: Bool
+    @Environment(\.isFocused) private var isFocused
+
+    var body: some View {
+        HStack(spacing: DS.Spacing.sm) {
+            if isSelected { Image(systemName: "checkmark") }
+            Text(title)
+        }
+        .foregroundStyle(isFocused ? Color.black : Color.white)
     }
 }
 

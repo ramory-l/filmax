@@ -24,7 +24,7 @@ struct FolderView: View {
                             PosterCard(posterURL: item.posterURL, title: item.title, subtitle: item.posterMeta,
                                        ratingText: item.ratingText, width: 108)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressableCard)
                         .onAppear { if item.id == viewModel.items.last?.id { Task { await viewModel.loadNext() } } }
                         .contextMenu {
                             Button(role: .destructive) {

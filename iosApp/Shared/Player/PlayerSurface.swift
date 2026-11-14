@@ -42,7 +42,9 @@ struct PlayerSurface: View {
             if let player {
                 AVPlayerContainer(player: player)
                     .ignoresSafeArea()
-                    .overlay(alignment: .topTrailing) { controls }
+                    #if os(tvOS)
+                    .overlay(alignment: .topTrailing) { nextButton }
+                    #endif
             } else if let error = viewModel.error {
                 ErrorOverlay(message: error) { Task { await reload() } }
             } else {
@@ -60,43 +62,24 @@ struct PlayerSurface: View {
         }
     }
 
-    @ViewBuilder private var controls: some View {
-        HStack(spacing: DS.Spacing.sm) {
-            #if os(iOS)
-            if viewModel.qualities.count > 1 {
-                Menu {
-                    ForEach(viewModel.qualities, id: \.self) { quality in
-                        Button {
-                            Task { await viewModel.select(quality: quality) }
-                        } label: {
-                            if quality == viewModel.currentQuality {
-                                Label(quality, systemImage: "checkmark")
-                            } else {
-                                Text(quality)
-                            }
-                        }
-                    }
-                } label: {
-                    circleIcon("slider.horizontal.3")
-                }
+    #if os(tvOS)
+    /// На Apple TV панели навигации над плеером нет — «Следующая серия» лежит поверх видео. На iPhone
+    /// она в панели навигации (`PlayerView`): поверх видео спорила бы с кнопками AVKit в том же углу.
+    @ViewBuilder private var nextButton: some View {
+        if let next = viewModel.nextTarget {
+            Button { onNext(next) } label: {
+                Image(systemName: "forward.end.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(DS.Spacing.md)
+                    .background(.black.opacity(0.5))
+                    .clipShape(Circle())
             }
-            #endif
-            if let next = viewModel.nextTarget {
-                Button { onNext(next) } label: { circleIcon("forward.end.fill") }
-                    .accessibilityLabel("Следующая серия")
-            }
+            .accessibilityLabel("Следующая серия")
+            .padding(DS.Spacing.lg)
         }
-        .padding(DS.Spacing.lg)
     }
-
-    private func circleIcon(_ name: String) -> some View {
-        Image(systemName: name)
-            .font(.system(size: 18, weight: .semibold))
-            .foregroundColor(.white)
-            .padding(DS.Spacing.md)
-            .background(.black.opacity(0.5))
-            .clipShape(Circle())
-    }
+    #endif
 
     /// Новый поток с прежней позиции: смена качества или варианта доставки не отматывает видео.
     private func setupPlayer() {

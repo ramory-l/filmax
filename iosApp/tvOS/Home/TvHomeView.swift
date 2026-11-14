@@ -8,6 +8,7 @@ struct TvHomeView: View {
 
     var body: some View {
         content
+            .revealOnLoad(viewModel.feed?.hasContent == true)
             .background(Theme.background.ignoresSafeArea())
             // Лента грузится один раз: перезагрузка при возврате с деталей сбросила бы догруженные
             // страницы рядов, и фокус потерял бы карточку, с которой ушли.
@@ -17,13 +18,14 @@ struct TvHomeView: View {
 
     @ViewBuilder private var content: some View {
         if let feed = viewModel.feed, feed.hasContent {
-            TvScreenScroll {
-                TvHomeNotice(feed: feed)
+            TvScreenScroll(underTabBar: feed.hero != nil) {
                 if let hero = feed.hero {
                     TvHomeHero(item: hero, inWatchlist: viewModel.watchlistIds.contains(hero.id)) {
                         Task { await viewModel.toggleWatchlist(hero) }
                     }
                 }
+                // Под героем, а не над ним: верх ленты лежит под панелью вкладок.
+                TvHomeNotice(feed: feed)
                 TvHomeFeedRails(feed: feed)
                 TvHomeShelves(viewModel: viewModel)
             }
@@ -35,7 +37,7 @@ struct TvHomeView: View {
     }
 }
 
-/// Мягкая ошибка: часть ленты не пришла или она из кэша без сети. Контент остаётся, баннер — сверху.
+/// Мягкая ошибка: часть ленты не пришла или она из кэша без сети. Контент остаётся, баннер — под героем.
 private struct TvHomeNotice: View {
     let feed: HomeFeed
 
