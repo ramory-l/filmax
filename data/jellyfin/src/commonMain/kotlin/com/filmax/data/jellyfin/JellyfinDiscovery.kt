@@ -8,6 +8,7 @@ import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.utils.io.core.buildPacket
 import io.ktor.utils.io.core.readText
+import io.ktor.utils.io.core.use
 import io.ktor.utils.io.core.writeText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher

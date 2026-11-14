@@ -1,4 +1,5 @@
 import SwiftUI
+import Shared
 
 // Базовые SwiftUI-компоненты Filmax для iPhone/iPad (аналог `core:designsystem`/`core:ui`).
 // Экраны собираются из них, а не из «сырых» View. TV-вариант — в `tvOS/DesignSystem`.
