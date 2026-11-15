@@ -51,7 +51,7 @@ private fun SettingSheet(state: ProfileState, onEvent: (ProfileEvent) -> Unit) {
                 .padding(horizontal = FilmaxMetrics.GridPadding)
                 .padding(bottom = 20.dp),
         ) {
-            optionsOf(setting).forEachIndexed { index, option ->
+            state.optionsOf(setting).forEachIndexed { index, option ->
                 FilmaxRadioRow(
                     label = option,
                     selected = option == current,

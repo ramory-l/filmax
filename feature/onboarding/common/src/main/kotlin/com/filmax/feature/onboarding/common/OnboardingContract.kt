@@ -12,6 +12,10 @@ data class OnboardingState(
     val error: String? = null,
     /** Показан вход на домашний сервер, а не kino.pub. */
     val homeServer: Boolean = false,
+    /** С входа на сервер можно вернуться к kino.pub; в приложении хаба kino.pub нет. */
+    val canLeaveHomeServer: Boolean = true,
+    /** На приветствии есть кнопка «Домашний сервер»: он включён в Профиле (ExtraSources). */
+    val homeServerEntry: Boolean = true,
 )
 
 sealed interface OnboardingEvent {

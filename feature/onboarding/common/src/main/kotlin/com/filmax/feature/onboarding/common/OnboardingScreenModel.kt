@@ -4,6 +4,7 @@ import com.filmax.core.domain.auth.AuthRepository
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.source.ContentSourceRepository
+import com.filmax.core.domain.source.ExtraSources
 import com.filmax.core.presentation.BaseScreenModel
 import kotlinx.coroutines.delay
 
@@ -11,24 +12,41 @@ private const val MILLIS_PER_SECOND = 1000L
 
 /**
  * Вход в kino.pub по коду устройства — и развилка на вход в домашний сервер. Если источник уже
- * домашний сервер (выбрали в Профиле или вышли из него), экран сразу открывается на сервере.
+ * сервер (выбрали в Профиле или вышли из него), экран сразу открывается на сервере. В приложении
+ * хаба kino.pub нет: экран — сразу вход на хаб, и вернуться с него некуда. Пока домашний сервер
+ * выключен в Профиле ([ExtraSources]), кнопки «Домашний сервер» на приветствии нет.
  */
 class OnboardingScreenModel(
     private val auth: AuthRepository,
     private val sources: ContentSourceRepository,
+    extras: ExtraSources,
 ) : BaseScreenModel<OnboardingState, OnboardingSideEffect, OnboardingEvent>(
-    OnboardingState(homeServer = sources.source.value == ContentSource.JELLYFIN),
+    OnboardingState(
+        homeServer = sources.source.value != ContentSource.KINOPUB,
+        canLeaveHomeServer = ContentSource.KINOPUB in sources.available,
+        homeServerEntry = extras.enabled.value,
+    ),
 ) {
 
     override fun onEvent(event: OnboardingEvent) {
         when (event) {
             OnboardingEvent.Login -> login()
             OnboardingEvent.RetryDeviceCode -> retryDeviceCode()
-            OnboardingEvent.OpenHomeServer -> screenModelScope { updateState { it.copy(homeServer = true) } }
-            OnboardingEvent.CloseHomeServer -> screenModelScope {
-                sources.select(ContentSource.KINOPUB)
-                updateState { it.copy(homeServer = false) }
-            }
+            OnboardingEvent.OpenHomeServer -> openHomeServer()
+            OnboardingEvent.CloseHomeServer -> closeHomeServer()
+        }
+    }
+
+    private fun openHomeServer() {
+        if (!state.homeServerEntry) return
+        screenModelScope { updateState { it.copy(homeServer = true) } }
+    }
+
+    private fun closeHomeServer() {
+        if (!state.canLeaveHomeServer) return
+        screenModelScope {
+            sources.select(ContentSource.KINOPUB)
+            updateState { it.copy(homeServer = false) }
         }
     }
 

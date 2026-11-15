@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +51,7 @@ import com.filmax.core.designsystem.FilmaxTheme
 import com.filmax.core.designsystem.FilmaxType
 import com.filmax.core.designsystem.GlassPanel
 import com.filmax.core.designsystem.GlassState
+import com.filmax.core.designsystem.R
 import com.filmax.core.designsystem.ShapeTile
 import com.filmax.core.designsystem.glassFill
 import com.filmax.core.designsystem.glow
@@ -235,7 +237,8 @@ fun FilmaxWordmark(modifier: Modifier = Modifier, large: Boolean = false) {
                 .background(palette.accent),
         )
         Text(
-            "Filmax",
+            // Бренд — ресурсом: «Плёнка» перекрывает его своим, экраны общие.
+            stringResource(R.string.brand_name),
             style = if (large) FilmaxType.logoLarge else FilmaxType.logo,
             color = FilmaxColors.Text,
         )

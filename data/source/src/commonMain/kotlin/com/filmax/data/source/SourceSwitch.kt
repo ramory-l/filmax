@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 
 /**
- * Реализация контракта [T] для выбранного источника. Обе реализации ленивые: невыбранный
+ * Реализация контракта [T] для выбранного источника. Все реализации ленивые: невыбранный
  * источник не создаётся вовсе, и, скажем, «Буду смотреть» kino.pub не идёт в сеть за своей
  * папкой, пока человек смотрит домашний сервер.
  *
@@ -18,6 +18,7 @@ internal class SourceSwitch<T>(
     private val sources: ContentSourceRepository,
     private val kinopub: Lazy<T>,
     private val homeServer: Lazy<T>,
+    private val hub: Lazy<T>,
 ) {
     val current: T get() = of(sources.source.value)
 
@@ -27,5 +28,6 @@ internal class SourceSwitch<T>(
     private fun of(source: ContentSource): T = when (source) {
         ContentSource.KINOPUB -> kinopub.value
         ContentSource.JELLYFIN -> homeServer.value
+        ContentSource.HUB -> hub.value
     }
 }

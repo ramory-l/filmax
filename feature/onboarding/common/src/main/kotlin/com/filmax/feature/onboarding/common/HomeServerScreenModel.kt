@@ -29,7 +29,9 @@ class HomeServerScreenModel(
     private val servers: HomeServerRepository,
     private val sources: ContentSourceRepository,
     private val client: ClientInfo,
-) : BaseScreenModel<HomeServerState, HomeServerSideEffect, HomeServerEvent>(HomeServerState()) {
+) : BaseScreenModel<HomeServerState, HomeServerSideEffect, HomeServerEvent>(
+    HomeServerState(hub = servers.source == ContentSource.HUB),
+) {
 
     /** Ожидание подтверждения кода; отменяется уходом на пароль или к выбору сервера. */
     private var polling: Job? = null
@@ -74,7 +76,7 @@ class HomeServerScreenModel(
             updateState { it.copy(busy = true, error = null) }
             when (val result = servers.connect(address)) {
                 is RequestResult.Success -> onConnected(result.data)
-                is RequestResult.Error -> updateState { it.copy(busy = false, error = connectError(result)) }
+                is RequestResult.Error -> updateState { it.copy(busy = false, error = connectError(result, it.hub)) }
             }
         }
     }
@@ -82,8 +84,10 @@ class HomeServerScreenModel(
     /**
      * На ТВ по умолчанию — код: пароль пультом набирать долго, а подтвердить вход в Jellyfin на
      * телефоне — пара нажатий. На телефоне — пароль: печатать удобно, второго устройства не нужно.
+     * Серверу без учётных записей (хабу) подключение — уже вход.
      */
     private suspend fun onConnected(server: HomeServer) {
+        if (!server.accounts) return signInOpen(server)
         val code = server.quickConnect && client.isTv
         updateState {
             it.copy(
@@ -136,8 +140,16 @@ class HomeServerScreenModel(
         }
     }
 
+    private suspend fun signInOpen(server: HomeServer) {
+        updateState { it.copy(server = server, address = server.address) }
+        when (val result = servers.login(server, username = "", password = "")) {
+            is RequestResult.Success -> finish()
+            is RequestResult.Error -> updateState { it.copy(busy = false, error = connectError(result, it.hub)) }
+        }
+    }
+
     private suspend fun finish() {
-        sources.select(ContentSource.JELLYFIN)
+        sources.select(servers.source)
         updateState { it.copy(busy = false) }
         postSideEffect(HomeServerSideEffect.SignedIn)
     }
@@ -172,10 +184,10 @@ class HomeServerScreenModel(
         const val CODE_UNAVAILABLE = "Вход по коду на этом сервере выключен — войдите по паролю"
         const val CODE_EXPIRED = "Код истёк. Запросите новый или войдите по паролю"
 
-        fun connectError(error: RequestResult.Error): String = when (error.toAppError()) {
+        fun connectError(error: RequestResult.Error, hub: Boolean): String = when (error.toAppError()) {
             AppError.Offline, AppError.Timeout ->
                 "Сервер не отвечает. Проверьте адрес и что устройство в той же сети"
-            AppError.NotFound -> "По этому адресу не Jellyfin"
+            AppError.NotFound -> if (hub) "По этому адресу нет хаба" else "По этому адресу не Jellyfin"
             else -> error.message ?: "Не удалось подключиться"
         }
 

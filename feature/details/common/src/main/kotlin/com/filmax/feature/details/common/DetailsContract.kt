@@ -24,6 +24,8 @@ data class DetailsState(
     val descriptionOpen: Boolean = false,
     /** У источника есть папки-закладки: без них кнопки «В папку» нет вовсе. */
     val foldersAvailable: Boolean = true,
+    /** Раздачи включены (см. ExtraSources): без них кнопки раздач в деталях нет. */
+    val torrentsAvailable: Boolean = true,
     /** Раздача, из которой тайтл играет вместо источника; null — играет источник. */
     val torrent: ChosenRelease? = null,
 ) {

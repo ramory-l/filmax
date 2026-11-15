@@ -77,7 +77,8 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest :detekt-rules:test --stacktrace
+        # Хаб — обычное JVM-приложение: его тесты не входят в testDebugUnitTest Android-модулей.
+        run: ./gradlew testDebugUnitTest :detekt-rules:test :hub:server:test --stacktrace
 
       - name: Upload test reports
         if: failure()

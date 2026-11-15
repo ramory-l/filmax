@@ -1,8 +1,9 @@
-name: Release (tag v*) → GitHub Release + Telegram
+name: Release (tag v* / plenka-v*) → GitHub Release + Telegram
 
-# Триггер — пуш git-тега вида v1.2.3. Собирает ПОДПИСАННЫЙ release-APK
-# (R8 + shrinkResources), публикует его в GitHub Release с авто-changelog
-# и дублирует в Telegram (с учётом лимита бота 50 МБ).
+# Триггер — пуш git-тега вида v1.2.3 (Filmax) или plenka-v0.0.1 (второе приложение «Плёнка»).
+# Собирает ПОДПИСАННЫЙ APK (R8 + shrinkResources), публикует его в GitHub Release с
+# авто-changelog и дублирует в Telegram (с учётом лимита бота 50 МБ). Релиз «Плёнки» не
+# помечается как Latest: этот значок — у Filmax, его по `releases/latest` ищут старые версии.
 #
 # Требуемые секреты репозитория:
 #   KEYSTORE_BASE64   — release-keystore (.jks), закодированный base64
@@ -14,14 +15,14 @@ name: Release (tag v*) → GitHub Release + Telegram
 #   TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID — уже используются debug-workflow
 on:
   push:
-    tags: [ "v*" ]
+    tags: [ "v*", "plenka-v*" ]
   # Ручной перезапуск для уже существующего тега: удобно, когда Release создан заранее
   # (например, через UI) и `gh release create` упал бы с «tag already exists», или когда
   # нужно доложить APK к готовому релизу. Собирает ровно код тега `tag`.
   workflow_dispatch:
     inputs:
       tag:
-        description: "Тег для сборки/публикации (например v1.7.1)"
+        description: "Тег для сборки/публикации (например v1.7.1 или plenka-v0.0.1)"
         required: true
 
 permissions:
@@ -41,6 +42,37 @@ jobs:
           # ref: собираем именно код тега (важно для ручного запуска с ветки master).
           ref: ${{ github.event.inputs.tag || github.ref_name }}
           fetch-depth: 0
+
+      # Какое приложение выпускаем — по префиксу тега. Дальше шаги берут всё отсюда: задачу
+      # Gradle, папку APK, имя файла, заголовок релиза и значок Latest.
+      - name: Resolve app by tag
+        run: |
+          case "$TAG" in
+            plenka-v[0-9]*)
+              {
+                echo "TAG_PREFIX=plenka-v"
+                echo "GRADLE_TASK=:app:assemblePlenka"
+                echo "APK_DIR=plenka"
+                echo "APK_NAME=plenka"
+                echo "APP_TITLE=Плёнка"
+                echo "MAKE_LATEST=false"
+              } >> "$GITHUB_ENV"
+              ;;
+            v[0-9]*)
+              {
+                echo "TAG_PREFIX=v"
+                echo "GRADLE_TASK=:app:assembleRelease"
+                echo "APK_DIR=release"
+                echo "APK_NAME=filmax"
+                echo "APP_TITLE=Filmax"
+                echo "MAKE_LATEST=true"
+              } >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "::error::Тег $TAG не похож ни на vX.Y.Z, ни на plenka-vX.Y.Z."
+              exit 1
+              ;;
+          esac
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -89,15 +121,15 @@ jobs:
           # APK, чтобы приложение читало Releases приватного репозитория. Не задан — сборка
           # пройдёт, но проверка обновлений в приложении будет молча выключена.
           UPDATE_GITHUB_TOKEN: ${{ secrets.UPDATE_GITHUB_TOKEN }}
-        run: ./gradlew :app:assembleRelease --stacktrace
+        run: ./gradlew "$GRADLE_TASK" --stacktrace
 
       - name: Locate & rename APK
         id: apk
         run: |
-          path=$(find . -path '*/outputs/apk/release/*.apk' | head -n1)
-          if [ -z "$path" ]; then echo "::error::release-APK не найден"; exit 1; fi
-          version="${TAG#v}"
-          dest="filmax-${version}.apk"
+          path=$(find . -path "*/outputs/apk/${APK_DIR}/*.apk" | head -n1)
+          if [ -z "$path" ]; then echo "::error::APK (${APK_DIR}) не найден"; exit 1; fi
+          version="${TAG#"$TAG_PREFIX"}"
+          dest="${APK_NAME}-${version}.apk"
           cp "$path" "$dest"
           size_mb=$(( $(stat -c%s "$dest") / 1048576 ))
           {
@@ -107,19 +139,26 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "APK: $dest (${size_mb} МБ)"
 
-      # Авто-changelog из коммитов между предыдущим и текущим тегом.
-      # Коммиты по Conventional Commits (feat/fix/perf/...), группируем по типам.
+      # Авто-changelog из коммитов между предыдущим и текущим тегом того же приложения.
+      # Коммиты по Conventional Commits (feat/fix/perf/...), группируем по типам. У первого
+      # релиза предыдущего тега нет, и вместо списка всей истории — одна строка: заметки к нему
+      # пишутся руками.
       - name: Generate changelog
         id: changelog
         run: |
-          prev=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
-          if [ -n "$prev" ]; then
-            range="${prev}..${TAG}"
-            echo "Изменения с ${prev}:" > "$RUNNER_TEMP/changelog.md"
-          else
-            range="${TAG}"
-            echo "Первый релиз Filmax." > "$RUNNER_TEMP/changelog.md"
+          footer() {
+            echo "---"
+            echo "versionName ${{ steps.apk.outputs.version }} · размер ${{ steps.apk.outputs.size_mb }} МБ"
+            echo "Собрано из тега \`${TAG}\`."
+          }
+          prev=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}[0-9]*" "${TAG}^" 2>/dev/null || true)
+          if [ -z "$prev" ]; then
+            { echo "Первый релиз ${APP_TITLE}."; echo; footer; } > "$RUNNER_TEMP/changelog.md"
+            cat "$RUNNER_TEMP/changelog.md"
+            exit 0
           fi
+          range="${prev}..${TAG}"
+          echo "Изменения с ${prev}:" > "$RUNNER_TEMP/changelog.md"
           echo >> "$RUNNER_TEMP/changelog.md"
           emit() {
             local prefix="$1" title="$2"
@@ -139,9 +178,7 @@ jobs:
             echo "### Коммиты" >> "$RUNNER_TEMP/changelog.md"
             git log --no-merges --pretty='- %s' "$range" >> "$RUNNER_TEMP/changelog.md"
           fi
-          echo "---" >> "$RUNNER_TEMP/changelog.md"
-          echo "versionName ${{ steps.apk.outputs.version }} · размер ${{ steps.apk.outputs.size_mb }} МБ" >> "$RUNNER_TEMP/changelog.md"
-          echo "Собрано из тега \`${TAG}\`." >> "$RUNNER_TEMP/changelog.md"
+          footer >> "$RUNNER_TEMP/changelog.md"
           cat "$RUNNER_TEMP/changelog.md"
 
       # Идемпотентно: если Release уже есть (создан заранее через UI или прошлым прогоном) —
@@ -150,7 +187,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           APK: ${{ steps.apk.outputs.path }}
-          TITLE: Filmax ${{ steps.apk.outputs.version }}
+          TITLE: ${{ env.APP_TITLE }} ${{ steps.apk.outputs.version }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" --clobber
@@ -159,6 +196,7 @@ jobs:
           else
             gh release create "$TAG" "$APK" \
               --title "$TITLE" \
+              --latest="$MAKE_LATEST" \
               --notes-file "$RUNNER_TEMP/changelog.md"
             echo "GitHub Release $TAG опубликован."
           fi
@@ -177,12 +215,12 @@ jobs:
             exit 0
           fi
           release_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
-          caption=$(printf 'Filmax %s · release\nПодписанный APK (%s МБ)\nRelease: %s' "$VERSION" "$SIZE_MB" "$release_url")
+          caption=$(printf '%s %s · release\nПодписанный APK (%s МБ)\nRelease: %s' "$APP_TITLE" "$VERSION" "$SIZE_MB" "$release_url")
           if [ "$SIZE_MB" -ge 50 ]; then
             echo "::warning::APK ${SIZE_MB}MB ≥ 50MB — шлю ссылку вместо файла."
             curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
               -d chat_id="${TELEGRAM_CHAT_ID}" \
-              --data-urlencode "text=Filmax ${VERSION} (release, ${SIZE_MB}MB) — превышает лимит Telegram 50MB. Скачай из GitHub Release: ${release_url}"
+              --data-urlencode "text=${APP_TITLE} ${VERSION} (release, ${SIZE_MB}MB) — превышает лимит Telegram 50MB. Скачай из GitHub Release: ${release_url}"
             exit 0
           fi
           # Как в android-build.yml: причина ошибки Telegram — в лог, а релиз к этому моменту уже

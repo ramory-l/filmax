@@ -39,10 +39,12 @@ import com.filmax.core.ui.components.FilmaxVersionLabel
 import com.filmax.feature.profile.common.ProfileEvent
 import com.filmax.feature.profile.common.ProfileSetting
 import com.filmax.feature.profile.common.ProfileState
+import com.filmax.feature.profile.common.accessCaption
 import com.filmax.feature.profile.common.activeUntil
 import com.filmax.feature.profile.common.daysLabel
 import com.filmax.feature.profile.common.initialsOrFallback
 import com.filmax.feature.profile.common.label
+import com.filmax.feature.profile.common.sourceChoice
 import com.filmax.feature.profile.common.subtitlesEnabled
 import com.filmax.feature.profile.common.valueOf
 
@@ -172,15 +174,27 @@ private fun UiRows(rows: SettingRows, enter: Int) {
 /** Ключ строки «Отключить обводку и свечение» в памяти фокуса экрана. */
 internal const val PLAIN_FOCUS_KEY = "plainFocus"
 
+/** Ключ строки «Домашний сервер и торренты» в памяти фокуса экрана. */
+internal const val EXTRA_SOURCES_KEY = "extraSources"
+
 /**
- * «Аккаунт» — источник контента и выход с подтверждением; «Приложение» — ручная проверка
- * обновлений и версия. Выход — из текущего источника: второй остаётся с входом.
+ * «Аккаунт» — домашний сервер и раздачи, источник контента и выход с подтверждением; «Приложение» —
+ * ручная проверка обновлений и версия. Выход — из текущего источника: второй остаётся с входом.
  */
 @Composable
 private fun AccountRows(rows: SettingRows, enter: Int) {
     val actions = rows.actions
     SettingsGroup("Аккаунт")
-    rows.Value(ProfileSetting.SOURCE, enter = enter)
+    // Включённый переключатель открывает строку источника прямо под собой.
+    if (rows.state.extraSourcesSwitchable) {
+        TvSwitchRow(
+            label = "Домашний сервер и торренты",
+            checked = rows.state.extraSources,
+            onCheckedChange = { enabled -> actions.onEvent(ProfileEvent.SetExtraSources(enabled)) },
+            modifier = Modifier.fxEnter(enter).then(rows.screenFocus.item(EXTRA_SOURCES_KEY)),
+        )
+    }
+    if (rows.state.sourceChoice) rows.Value(ProfileSetting.SOURCE, enter = enter)
     TvSettingRow(
         label = "Выйти из аккаунта",
         value = null,
@@ -240,7 +254,7 @@ private fun AccessCard(state: ProfileState, modifier: Modifier) {
         TvSubscriptionCard(
             overline = "Источник",
             value = state.source.label,
-            caption = "Своя медиатека, без подписки",
+            caption = state.source.accessCaption,
             modifier = modifier,
         )
     } else {

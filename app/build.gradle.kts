@@ -9,6 +9,13 @@ plugins {
     id("filmax.detekt")
 }
 
+// Пакет «Плёнки» — свой, а не суффикс Filmax: это отдельный продукт со своим именем, и на ТВ две
+// иконки. Build type умеет только дописывать к пакету, поэтому он задаётся в androidComponents.
+val plenkaApplicationId = "ru.malyi.plenka"
+
+// Теги релизов «Плёнки» — plenka-vX.Y.Z: по префиксу их отличают релизный CI и проверка обновлений.
+val plenkaTagPrefix = "plenka-v"
+
 // Firebase (Crashlytics) включается только при наличии конфига: локальная сборка и PR-CI без
 // секретов не должны падать. Файл содержит ключи проекта Firebase — в публичном репо его не
 // держим (.gitignore); локально кладётся в app/, в CI декодируется из секрета
@@ -32,6 +39,7 @@ if (googleServicesConfig.exists()) {
         "Demo" to "com.filmax.app.demo",
         "Mock" to "com.filmax.app.mock",
         "Benchmark" to "com.filmax.app.bench",
+        "Plenka" to plenkaApplicationId,
         "Release" to "com.filmax.app",
     )
     val unregisteredVariants = variantPackages.filterValues { it !in registeredPackages }.keys
@@ -70,12 +78,14 @@ val demoRefreshToken: String = (localProps.getProperty("demo.refreshToken") ?: "
 val updateGithubToken: String =
     (System.getenv("UPDATE_GITHUB_TOKEN") ?: localProps.getProperty("github.updateToken") ?: "").trim()
 
-// versionName ← последний git-тег vX.Y.Z (без «v»); нет тегов → 1.0.0.
-fun gitVersionName(): String =
+// versionName ← последний git-тег продукта без префикса: у Filmax теги vX.Y.Z, у «Плёнки» —
+// plenka-vX.Y.Z. Шаблон --match обязателен: без него тег «Плёнки» на свежем коммите стал бы
+// версией Filmax. Нет тегов — [fallback].
+fun gitVersionName(tagPrefix: String, fallback: String): String =
     providers.exec {
-        commandLine("git", "describe", "--tags", "--abbrev=0")
+        commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "$tagPrefix[0-9]*")
         isIgnoreExitValue = true
-    }.standardOutput.asText.get().trim().removePrefix("v").ifEmpty { "1.0.0" }
+    }.standardOutput.asText.get().trim().removePrefix(tagPrefix).ifEmpty { fallback }
 
 // versionCode ← число коммитов в HEAD: монотонно растёт от релиза к релизу.
 // В CI требуется полная история (checkout fetch-depth: 0), иначе вернёт 1.
@@ -94,13 +104,15 @@ android {
         minSdk        = 26
         targetSdk     = 35
         versionCode   = gitCommitCount()
-        versionName   = gitVersionName()
+        versionName   = gitVersionName(tagPrefix = "v", fallback = "1.0.0")
         buildConfigField("String", "TMDB_API_KEY", "\"$tmdbApiKey\"")
         // По умолчанию токена нет — его несёт только build type `demo`.
         buildConfigField("String", "DEMO_ACCESS_TOKEN", "\"\"")
         buildConfigField("String", "DEMO_REFRESH_TOKEN", "\"\"")
         // In-app update: откуда читать релизы и чем авторизоваться (см. GitHubUpdateRepository).
         buildConfigField("String", "UPDATE_GITHUB_REPO", "\"malyi-m-dev/filmax\"")
+        // Релизы двух приложений лежат в одном репозитории и различаются префиксом тега.
+        buildConfigField("String", "UPDATE_TAG_PREFIX", "\"v\"")
         // Firebase-проект для отзывов (Firestore по REST). Не секрет: тот же id лежит в
         // google-services.json и уходит в каждом запросе.
         buildConfigField("String", "FIREBASE_PROJECT_ID", "\"filmax-5ef9f\"")
@@ -179,6 +191,17 @@ android {
             matchingFallbacks += "release"
             proguardFiles("benchmark-rules.pro")
         }
+        // «Плёнка» — второе приложение рядом с Filmax: те же экраны, но источник один — домашний хаб
+        // на компьютере (TMDB-витрина, видео из раздач), без kino.pub и Jellyfin. Пакет свой, не
+        // суффикс Filmax (см. plenkaApplicationId): это отдельный продукт со своим именем. Подпись —
+        // боевая, если ключ есть, иначе debug: сборку без секретов всё равно можно поставить на эмулятор.
+        create("plenka") {
+            initWith(getByName("release"))
+            matchingFallbacks += "release"
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
+                ?: signingConfigs.getByName("debug")
+            buildConfigField("String", "UPDATE_TAG_PREFIX", "\"$plenkaTagPrefix\"")
+        }
     }
 
     // Benchmark берёт подмену Application и строки из mock — фейковый data-слой у них общий.
@@ -209,6 +232,15 @@ android {
     }
 }
 
+androidComponents {
+    // Версия у «Плёнки» своя, с нуля: build type её не задаёт, поэтому — здесь, как и пакет.
+    val plenkaVersionName = gitVersionName(tagPrefix = plenkaTagPrefix, fallback = "0.0.1")
+    onVariants(selector().withBuildType("plenka")) { variant ->
+        variant.applicationId.set(plenkaApplicationId)
+        variant.outputs.forEach { output -> output.versionName.set(plenkaVersionName) }
+    }
+}
+
 dependencies {
     // Core
     implementation(project(":core:network"))
@@ -233,6 +265,8 @@ dependencies {
     implementation(project(":data:source"))
     // Раздачи через TorrServer: второй способ посмотреть тайтл любого источника.
     implementation(project(":data:torrents"))
+    // Свой хаб на компьютере — единственный источник сборки «Плёнка» (src/plenka).
+    implementation(project(":data:hub"))
     // Общий с iOS состав data-модулей и use case'ов: один список на обе платформы.
     implementation(project(":shared"))
     // Фейки только в сборке mock: main-код о них не знает, подключает MockFilmaxApplication.

@@ -35,6 +35,14 @@ val ContentSource.label: String
     get() = when (this) {
         ContentSource.KINOPUB -> "kino.pub"
         ContentSource.JELLYFIN -> "Домашний сервер"
+        ContentSource.HUB -> "Домашний хаб"
+    }
+
+/** Чем источник без подписки заменяет её — подпись карточки доступа в Профиле. */
+val ContentSource.accessCaption: String
+    get() = when (this) {
+        ContentSource.KINOPUB, ContentSource.JELLYFIN -> "Своя медиатека, без подписки"
+        ContentSource.HUB -> "Каталог TMDB, видео из торрентов"
     }
 
 /** Подпись под именем аккаунта: у источника без подписки (домашний сервер) — его название. */
@@ -50,13 +58,19 @@ val ThemePalette.label: String
     }
 
 /** Варианты настройки по порядку — их показывает панель, и по номеру из неё выбирают. */
-fun optionsOf(setting: ProfileSetting): List<String> = when (setting) {
+fun ProfileState.optionsOf(setting: ProfileSetting): List<String> = when (setting) {
     ProfileSetting.QUALITY -> PlaybackSettings.qualityOptions
     ProfileSetting.AUDIO -> PlaybackSettings.audioOptions
     ProfileSetting.SUBTITLES -> PlaybackSettings.subtitleOptions
     ProfileSetting.PALETTE -> ThemePalette.entries.map { it.label }
-    ProfileSetting.SOURCE -> ContentSource.entries.map { it.label }
+    ProfileSetting.SOURCE -> sources.map { it.label }
 }
+
+/**
+ * Источник можно сменить: в приложении хаба он один, а в основном второй (домашний сервер)
+ * появляется, только когда включён переключатель «Домашний сервер и торренты».
+ */
+val ProfileState.sourceChoice: Boolean get() = sources.size > 1 && extraSources
 
 /** Текущее значение настройки — подпись справа в строке. */
 fun ProfileState.valueOf(setting: ProfileSetting): String = when (setting) {

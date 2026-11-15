@@ -1,5 +1,6 @@
 package com.filmax.core.domain.torrent
 
+import com.filmax.core.domain.catalog.model.Item
 import com.filmax.core.domain.catalog.model.MediaTrack
 import com.filmax.core.domain.common.RequestResult
 import kotlinx.coroutines.flow.Flow
@@ -98,4 +99,18 @@ interface TorrentStreams {
      * этой серии в ней нет: тогда играет источник.
      */
     suspend fun playable(itemId: Int, track: MediaTrack): RequestResult<MediaTrack>?
+}
+
+/**
+ * Раздача без участия человека — для источника без своих видео (хаб): «Играть» сразу играет, как
+ * в Lampa, а сменить раздачу можно на экране торрентов. Правила — любимые озвучки, качество под
+ * телевизор, живые сиды.
+ */
+interface TorrentAutoChoice {
+
+    /**
+     * Находит раздачу тайтла [item], в которой есть [track], выбирает и запоминает её. Ошибка —
+     * поиск не удался или ни одна раздача не подошла.
+     */
+    suspend fun choose(item: Item, track: MediaTrack): RequestResult<ChosenRelease>
 }

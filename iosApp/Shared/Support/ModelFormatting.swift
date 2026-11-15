@@ -55,6 +55,7 @@ extension ContentSource {
         switch self {
         case .kinopub: return "kino.pub"
         case .jellyfin: return "Домашний сервер"
+        case .hub: return "Домашний хаб"
         }
     }
 }

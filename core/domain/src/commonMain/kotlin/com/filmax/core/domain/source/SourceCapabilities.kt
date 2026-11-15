@@ -20,7 +20,7 @@ data class SourceCapabilities(
     val subscription: Boolean,
 )
 
-/** Возможности источника. Домен их знает: источников два, и различие — часть их описания. */
+/** Возможности источника. Домен их знает: источников немного, и различие — часть их описания. */
 val ContentSource.capabilities: SourceCapabilities
     get() = when (this) {
         ContentSource.KINOPUB -> SourceCapabilities(
@@ -30,7 +30,8 @@ val ContentSource.capabilities: SourceCapabilities
             folders = true,
             subscription = true,
         )
-        ContentSource.JELLYFIN -> SourceCapabilities(
+        // У хаба оценка — зрителей TMDB, своя оценка витрины, как у сервера — из медиатеки.
+        ContentSource.JELLYFIN, ContentSource.HUB -> SourceCapabilities(
             ratings = listOf(RatingSource.COMMUNITY),
             sorts = listOf(
                 CatalogSort.UPDATED,

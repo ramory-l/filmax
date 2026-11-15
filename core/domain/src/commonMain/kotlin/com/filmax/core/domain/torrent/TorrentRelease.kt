@@ -1,5 +1,7 @@
 package com.filmax.core.domain.torrent
 
+import com.filmax.core.domain.catalog.model.Item
+
 /**
  * Раздача тайтла с трекера. [link] — то, что принимает TorrServer: магнит или ссылка на .torrent.
  * Ищет сам TorrServer (его Torznab-мост к Jackett), и ссылки Jackett ведут на адрес, видный только
@@ -66,4 +68,23 @@ data class TorrentQuery(
     val names: List<String>,
     val year: Int?,
     val episodic: Boolean,
+)
+
+/**
+ * Запрос к трекерам: kino.pub и хаб пишут названия через « / » — русское и оригинальное, и
+ * трекеры пишут оба, поэтому ищется каждое.
+ */
+fun Item.torrentQuery(): TorrentQuery = TorrentQuery(
+    names = title.split(" / ").map(String::trim).filter(String::isNotEmpty),
+    year = year.takeIf { it > 0 },
+    episodic = type.episodic,
+)
+
+/** Раздача как выбор тайтла: то, что нужно, чтобы открыть её снова и узнать в новой выдаче. */
+fun TorrentRelease.toChosen(): ChosenRelease = ChosenRelease(
+    link = link,
+    key = key,
+    title = title,
+    quality = traits.quality,
+    seasons = traits.seasons,
 )

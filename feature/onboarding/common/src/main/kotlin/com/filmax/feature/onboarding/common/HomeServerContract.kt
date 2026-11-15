@@ -35,6 +35,11 @@ data class HomeServerState(
     /** Идёт подключение или вход — кнопка действия показывает ожидание. */
     val busy: Boolean = false,
     val error: String? = null,
+    /**
+     * Вход на хаб Filmax, а не на Jellyfin: свои подписи, а после адреса шагов входа нет — хаб
+     * открыт домашней сети.
+     */
+    val hub: Boolean = false,
 )
 
 /** Нажатие экранной клавиатуры ТВ. */

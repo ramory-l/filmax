@@ -6,6 +6,7 @@ import com.filmax.core.domain.source.ContentSource
 import com.filmax.data.fake.FakeAuthRepository
 import com.filmax.data.fake.FakeBackend
 import com.filmax.data.fake.FakeContentSourceRepository
+import com.filmax.data.fake.FakeExtraSources
 import com.filmax.data.fake.FakeLatency
 import com.filmax.data.fake.FakePlaybackSettingsRepository
 import com.filmax.data.fake.FakeThemeSettingsRepository
@@ -38,6 +39,7 @@ class ProfileScreenModelTest {
     private val playback = FakePlaybackSettingsRepository()
     private val theme = FakeThemeSettingsRepository()
     private val sources = FakeContentSourceRepository()
+    private val extras = FakeExtraSources(enabled = false)
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(dispatcher)
@@ -67,7 +69,8 @@ class ProfileScreenModelTest {
         assertTrue(model.states.value.settingOpen)
         assertEquals(ProfileSetting.QUALITY, model.states.value.setting)
 
-        model.dispatch(ProfileEvent.ChooseOption(optionsOf(ProfileSetting.QUALITY).indexOf("1080p")))
+        val quality = model.states.value.optionsOf(ProfileSetting.QUALITY).indexOf("1080p")
+        model.dispatch(ProfileEvent.ChooseOption(quality))
         advanceUntilIdle()
 
         assertFalse(model.states.value.settingOpen, "панель не закрылась после выбора")
@@ -157,13 +160,29 @@ class ProfileScreenModelTest {
     }
 
     @Test
+    fun `source choice appears only with the home server switch on`() = runTest(dispatcher) {
+        val model = model()
+        advanceUntilIdle()
+        assertTrue(model.states.value.extraSourcesSwitchable)
+        assertFalse(model.states.value.sourceChoice)
+
+        model.dispatch(ProfileEvent.SetExtraSources(true))
+        advanceUntilIdle()
+
+        assertTrue(extras.enabled.value)
+        assertTrue(model.states.value.sourceChoice)
+    }
+
+    @Test
     fun `source is chosen in the same option panel`() = runTest(dispatcher) {
+        extras.setEnabled(true)
         val model = model()
         advanceUntilIdle()
         assertEquals("kino.pub", model.states.value.valueOf(ProfileSetting.SOURCE))
 
         model.dispatch(ProfileEvent.OpenSetting(ProfileSetting.SOURCE))
-        model.dispatch(ProfileEvent.ChooseOption(optionsOf(ProfileSetting.SOURCE).indexOf("Домашний сервер")))
+        val homeServer = model.states.value.optionsOf(ProfileSetting.SOURCE).indexOf("Домашний сервер")
+        model.dispatch(ProfileEvent.ChooseOption(homeServer))
         advanceUntilIdle()
 
         assertEquals(ContentSource.JELLYFIN, sources.source.value)
@@ -174,6 +193,6 @@ class ProfileScreenModelTest {
     private fun model(auth: FakeAuthRepository = FakeAuthRepository(backend)) = ProfileScreenModel(
         user = FakeUserRepository(backend),
         auth = auth,
-        settings = ProfileSettings(playback, theme, sources),
+        settings = ProfileSettings(playback, theme, sources, extras),
     )
 }

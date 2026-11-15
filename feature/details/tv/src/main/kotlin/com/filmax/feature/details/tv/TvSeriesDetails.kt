@@ -177,10 +177,13 @@ private fun SeriesButtons(state: DetailsState, actions: DetailsActions, focus: S
             TvIconButton(icon = Icons.Rounded.Movie, contentDescription = "Трейлер", onClick = onTrailer)
         }
         // Раздачи — к той же серии, что запустит «Продолжить»: выбранная раздача сыграет её.
-        TvIconButton(
-            icon = Icons.Rounded.Download,
-            contentDescription = torrentButtonLabel(state.torrent),
-            onClick = { actions.onTorrents(play?.video) },
-        )
+        // Раздачи выключены в Профиле — кнопки нет.
+        if (state.torrentsAvailable) {
+            TvIconButton(
+                icon = Icons.Rounded.Download,
+                contentDescription = torrentButtonLabel(state.torrent),
+                onClick = { actions.onTorrents(play?.video) },
+            )
+        }
     }
 }

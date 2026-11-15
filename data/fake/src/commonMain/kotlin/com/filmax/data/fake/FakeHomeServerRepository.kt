@@ -1,6 +1,7 @@
 package com.filmax.data.fake
 
 import com.filmax.core.domain.common.RequestResult
+import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.source.HomeServer
 import com.filmax.core.domain.source.HomeServerRepository
 import com.filmax.core.domain.source.QuickConnectCode
@@ -13,6 +14,7 @@ class FakeHomeServerRepository(
     var found: List<HomeServer> = listOf(HOME),
     private val password: String = "secret",
     private val approveOnCheck: Int = 2,
+    override val source: ContentSource = ContentSource.JELLYFIN,
 ) : HomeServerRepository {
 
     var signedIn = false

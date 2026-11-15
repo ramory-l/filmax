@@ -32,6 +32,7 @@ import com.filmax.core.ui.components.FilmaxSubscriptionCard
 import com.filmax.feature.profile.common.ProfileEvent
 import com.filmax.feature.profile.common.ProfileSetting
 import com.filmax.feature.profile.common.ProfileState
+import com.filmax.feature.profile.common.accessCaption
 import com.filmax.feature.profile.common.activeUntil
 import com.filmax.feature.profile.common.daysLabel
 import com.filmax.feature.profile.common.initialsOrFallback
@@ -67,7 +68,7 @@ internal fun AccessCard(state: ProfileState) {
     if (!state.source.capabilities.subscription) {
         FilmaxSubscriptionCard(
             title = state.source.label,
-            subtitle = "Своя медиатека, без подписки",
+            subtitle = state.source.accessCaption,
             active = true,
         )
     } else {

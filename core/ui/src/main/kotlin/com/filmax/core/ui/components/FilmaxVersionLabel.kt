@@ -7,9 +7,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.filmax.core.designsystem.R
 
 /**
- * Подпись версии приложения («Filmax 1.2.3») для низа Профиля и экранов настроек.
+ * Подпись версии приложения («Filmax 1.2.3», у «Плёнки» — «Плёнка 1.2.3») для низа Профиля и
+ * экранов настроек.
  * versionName читается из PackageManager: BuildConfig app-модуля фичам недоступен,
  * а туда версия попадает из git-тега при сборке. [color] отдан вызывающему — у mobile
  * и TV разные палитры приглушённого текста.
@@ -25,7 +28,7 @@ fun FilmaxVersionLabel(color: Color, modifier: Modifier = Modifier) {
     }
     if (versionName.isEmpty()) return
     Text(
-        "Filmax $versionName",
+        "${stringResource(R.string.brand_name)} $versionName",
         style = MaterialTheme.typography.bodySmall,
         color = color,
         modifier = modifier,

@@ -6,6 +6,7 @@ import com.filmax.data.fake.FakeBackend
 import com.filmax.data.fake.FakeCastRepository
 import com.filmax.data.fake.FakeCatalogRepository
 import com.filmax.data.fake.FakeContentSourceRepository
+import com.filmax.data.fake.FakeExtraSources
 import com.filmax.data.fake.FakeIds
 import com.filmax.data.fake.FakeLatency
 import com.filmax.data.fake.FakeTorrentChoices
@@ -46,12 +47,25 @@ class DetailsScreenModelTest {
     private val backend = FakeBackend(latency = FakeLatency.None)
     private val sources = FakeContentSourceRepository()
     private val watchlist = FakeWatchlistRepository(backend)
+    private val extras = FakeExtraSources()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(dispatcher)
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
+
+    @Test
+    fun `torrents button follows the profile switch`() = runTest(dispatcher) {
+        extras.setEnabled(false)
+        val model = model(FakeIds.HERO_MOVIE)
+        advanceUntilIdle()
+        assertFalse(model.states.value.torrentsAvailable)
+
+        extras.setEnabled(true)
+        advanceUntilIdle()
+        assertTrue(model.states.value.torrentsAvailable)
+    }
 
     @Test
     fun `movie opens without series data and with similar titles`() = runTest(dispatcher) {
@@ -177,7 +191,7 @@ class DetailsScreenModelTest {
         watchlist = watchlist,
         cast = FakeCastRepository(backend),
         toggleWatchlist = ToggleWatchlistUseCase(watchlist),
-        playback = DetailsPlayback(sources = sources, torrents = FakeTorrentChoices()),
+        playback = DetailsPlayback(sources = sources, torrents = FakeTorrentChoices(), extras = extras),
     )
 
     private companion object {

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Баннер «Плёнки» для Android TV, 320×180: белый вордмарк ПЛЁНКА на тёмном фоне палитры «Мята» и
+  мятная полоса под ним. На ТВ баннеры двух приложений стоят рядом — различать их должен цвет и
+  слово, а не подпись, которую лаунчер показывает только в фокусе. Буквы — векторные пути (vector
+  drawable не рендерит текст), высота 44 (y 68..112), толщина 7 — как у вордмарка Filmax.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+
+    <!-- Фон: тёмный градиент «Мяты» -->
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0" android:startY="0"
+                android:endX="320" android:endY="180">
+                <item android:offset="0" android:color="#FF0F2027" />
+                <item android:offset="1" android:color="#FF0A1218" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- П: перекладина и две стойки -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M43,68 H73 V75 H43 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M43,68 H50 V112 H43 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M66,68 H73 V112 H66 Z" />
+    <!-- Л: перекладина, правая стойка и косая левая ножка -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M92,68 H115 V75 H92 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M108,68 H115 V112 H108 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M92,68 L99,68 L91,112 L84,112 Z" />
+    <!-- Ё: стойка, три перекладины и две точки -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M126,68 H133 V112 H126 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M126,68 H152 V75 H126 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M126,86.5 H148 V93.5 H126 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M126,105 H152 V112 H126 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M131,57 H137 V63 H131 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M142,57 H148 V63 H142 Z" />
+    <!-- Н: две стойки и перекладина -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M163,68 H170 V112 H163 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M186,68 H193 V112 H186 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M170,86.5 H186 V93.5 H170 Z" />
+    <!-- К: стойка и два плеча от середины -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M204,68 H211 V112 H204 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M211,86 L227,68 L235,68 L211,96 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M215,88 L235,112 L227,112 L211,93 Z" />
+    <!-- А: две ножки и перекладина -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M259,68 L265,68 L253,112 L246,112 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M259,68 L265,68 L278,112 L271,112 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M252,93 L272,93 L272,99 L252,99 Z" />
+
+    <!-- Мятная полоса — знак второго приложения -->
+    <path android:fillColor="#FF3FDBB2" android:pathData="M43,124 L278,124 L278,130 L43,130 Z" />
+</vector>

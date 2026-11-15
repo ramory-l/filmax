@@ -23,8 +23,12 @@ object ProfileSamples {
     /** Подписка кончилась — карточка зовёт продлить. */
     val expired = loaded.copy(profile = profile.copy(subscription = Subscription(false, null, null)))
 
-    /** Домашний сервер: подписки нет вовсе. */
-    val homeServer = loaded.copy(source = ContentSource.JELLYFIN, profile = profile.copy(subscription = null))
+    /** Домашний сервер: подписки нет вовсе, переключатель домашнего сервера включён. */
+    val homeServer = loaded.copy(
+        source = ContentSource.JELLYFIN,
+        extraSources = true,
+        profile = profile.copy(subscription = null),
+    )
 
     val loading = ProfileState()
 

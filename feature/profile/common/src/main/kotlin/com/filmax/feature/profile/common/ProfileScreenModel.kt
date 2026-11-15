@@ -3,7 +3,6 @@ package com.filmax.feature.profile.common
 import com.filmax.core.domain.auth.AuthRepository
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.settings.ThemePalette
-import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.user.UserRepository
 import com.filmax.core.presentation.BaseScreenModel
 
@@ -23,6 +22,7 @@ class ProfileScreenModel(
     private val playbackSettings = settings.playback
     private val themeSettings = settings.theme
     private val sources = settings.sources
+    private val extras = settings.extras
 
     init {
         onFetchData()
@@ -33,7 +33,14 @@ class ProfileScreenModel(
 
     private fun observeSource() {
         screenModelScope {
-            sources.source.collect { source -> updateState { it.copy(source = source) } }
+            sources.source.collect { source ->
+                updateState { it.copy(source = source, sources = sources.available) }
+            }
+        }
+        screenModelScope {
+            extras.enabled.collect { enabled ->
+                updateState { it.copy(extraSources = enabled, extraSourcesSwitchable = extras.switchable) }
+            }
         }
     }
 
@@ -66,6 +73,7 @@ class ProfileScreenModel(
             is ProfileEvent.SetSubtitlesEnabled ->
                 screenModelScope { playbackSettings.setSubtitleLanguage(subtitleLanguageFor(event.enabled)) }
             is ProfileEvent.SetPlainFocus -> screenModelScope { themeSettings.setPlainFocus(event.enabled) }
+            is ProfileEvent.SetExtraSources -> screenModelScope { extras.setEnabled(event.enabled) }
             is ProfileEvent.OpenSetting -> update { it.copy(setting = event.setting, settingOpen = true) }
             ProfileEvent.CloseSetting -> update { it.copy(settingOpen = false) }
             is ProfileEvent.ChooseOption -> chooseOption(event.index)
@@ -93,7 +101,7 @@ class ProfileScreenModel(
     private fun chooseOption(index: Int) {
         screenModelScope {
             val current = state
-            val option = optionsOf(current.setting).getOrNull(index) ?: return@screenModelScope
+            val option = current.optionsOf(current.setting).getOrNull(index) ?: return@screenModelScope
             updateState { it.copy(settingOpen = false) }
             when (current.setting) {
                 ProfileSetting.QUALITY -> playbackSettings.setQuality(option)
@@ -101,7 +109,7 @@ class ProfileScreenModel(
                 ProfileSetting.SUBTITLES -> playbackSettings.setSubtitleLanguage(option)
                 ProfileSetting.PALETTE -> themeSettings.setPalette(ThemePalette.entries[index])
                 // Граф сам вернётся к корню нового источника (или ко входу, если на него не входили).
-                ProfileSetting.SOURCE -> sources.select(ContentSource.entries[index])
+                ProfileSetting.SOURCE -> sources.select(current.sources[index])
             }
         }
     }

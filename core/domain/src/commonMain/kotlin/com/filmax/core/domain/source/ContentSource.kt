@@ -13,11 +13,23 @@ import kotlinx.coroutines.flow.StateFlow
 enum class ContentSource {
     KINOPUB,
     JELLYFIN,
+
+    /**
+     * Filmax Hub — свой сервер дома: витрина из TMDB, а видео — раздачи через TorrServer. Это
+     * источник отдельного приложения «Плёнка», в основном его нет среди доступных.
+     */
+    HUB,
 }
 
 /** Выбранный источник. Хранится на устройстве: у телефона и ТВ он может быть разным. */
 interface ContentSourceRepository {
     val source: StateFlow<ContentSource>
+
+    /**
+     * Из чего можно выбирать в этой сборке; первый — источник по умолчанию. Основное приложение —
+     * kino.pub и домашний сервер, «Плёнка» — только хаб, и выбора там нет вовсе.
+     */
+    val available: List<ContentSource>
 
     suspend fun select(source: ContentSource)
 }

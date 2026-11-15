@@ -37,6 +37,7 @@ import com.filmax.core.tv.designsystem.TvScreenFocus
 import com.filmax.core.tv.designsystem.TvSettingRow
 import com.filmax.core.tv.designsystem.rememberTvScreenFocus
 import com.filmax.core.tv.designsystem.tvFocusGroup
+import com.filmax.feature.onboarding.common.HUB_HINT
 import com.filmax.feature.onboarding.common.HomeServerEvent
 import com.filmax.feature.onboarding.common.HomeServerField
 import com.filmax.feature.onboarding.common.HomeServerScreenModel
@@ -44,6 +45,7 @@ import com.filmax.feature.onboarding.common.HomeServerSideEffect
 import com.filmax.feature.onboarding.common.HomeServerState
 import com.filmax.feature.onboarding.common.HomeServerStep
 import com.filmax.feature.onboarding.common.ServerKey
+import com.filmax.feature.onboarding.common.serverTitle
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -60,13 +62,16 @@ private const val ADDRESS_KEY = "address"
 private const val USERNAME_KEY = "username"
 private const val PASSWORD_INSTEAD_KEY = "usePassword"
 
+private const val JELLYFIN_HINT = "Jellyfin в этой сети: фильмы и сериалы из своей медиатеки, без подписки."
+
 /**
  * Вход на домашний сервер. «Назад» — шаг назад: со входа к выбору сервера, с выбора сервера —
- * к приветствию kino.pub ([onBack]).
+ * к приветствию kino.pub ([onBack]). В приложении хаба kino.pub нет — [onBack] null, и «Назад» на
+ * выборе сервера закрывает приложение, как на любом стартовом экране.
  */
 @Composable
 internal fun TvHomeServerStep(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     screenModel: HomeServerScreenModel = koinViewModel(),
     navigator: Navigator = koinInject(),
 ) {
@@ -77,8 +82,8 @@ internal fun TvHomeServerStep(
             HomeServerSideEffect.SignedIn -> navigator.root(Destination.Home)
         }
     }
-    BackHandler {
-        if (state.step == HomeServerStep.SERVER) onBack() else dispatch(HomeServerEvent.ChangeServer)
+    BackHandler(enabled = onBack != null || state.step != HomeServerStep.SERVER) {
+        if (state.step == HomeServerStep.SERVER) onBack?.invoke() else dispatch(HomeServerEvent.ChangeServer)
     }
     val focus = rememberTvScreenFocus(startAt = startKey(state))
     // Шаг сменился целиком — фокус на его первый элемент, иначе он повис бы на исчезнувшей кнопке и
@@ -129,9 +134,9 @@ private fun startKey(state: HomeServerState): String = when (state.step) {
 private fun StepHeader(state: HomeServerState) {
     val colors = LocalFxColors.current
     val server = state.server
-    val title = if (state.step == HomeServerStep.SERVER) "Домашний сервер" else server?.name ?: "Сервер"
+    val title = if (state.step == HomeServerStep.SERVER) serverTitle(state) else server?.name ?: "Сервер"
     val hint = when (state.step) {
-        HomeServerStep.SERVER -> "Jellyfin в этой сети: фильмы и сериалы из своей медиатеки, без подписки."
+        HomeServerStep.SERVER -> if (state.hub) HUB_HINT else JELLYFIN_HINT
         HomeServerStep.CODE -> "Откройте Jellyfin на телефоне или в браузере: Профиль → Quick Connect — и введите код."
         HomeServerStep.PASSWORD -> "Пользователь Jellyfin на этом сервере."
     }
@@ -141,7 +146,7 @@ private fun StepHeader(state: HomeServerState) {
 
 /** Найденные серверы — одним «ОК»; не нашёлся — адрес набирают клавиатурой справа. */
 @Composable
-private fun ServerChoice(step: StepContext, onBack: () -> Unit) {
+private fun ServerChoice(step: StepContext, onBack: (() -> Unit)?) {
     val state = step.state
     Column(Modifier.tvFocusGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         state.found.forEachIndexed { index, server ->
@@ -164,7 +169,7 @@ private fun ServerChoice(step: StepContext, onBack: () -> Unit) {
             onClick = { step.dispatch(HomeServerEvent.Search) },
             style = TvButtonStyle.Secondary,
         )
-        TvButton(text = "kino.pub", onClick = onBack, style = TvButtonStyle.Secondary)
+        onBack?.let { TvButton(text = "kino.pub", onClick = it, style = TvButtonStyle.Secondary) }
     }
 }
 

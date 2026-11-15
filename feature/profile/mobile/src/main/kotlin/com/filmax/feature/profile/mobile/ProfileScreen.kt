@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +40,7 @@ import com.filmax.core.ui.components.FilmaxSettingsDivider
 import com.filmax.core.ui.components.FilmaxSettingsGroup
 import com.filmax.core.ui.components.FilmaxSettingsRow
 import com.filmax.core.ui.components.FilmaxStatusBarGlass
+import com.filmax.core.ui.components.FilmaxToggleRow
 import com.filmax.core.ui.components.FilmaxVersionLabel
 import com.filmax.core.ui.components.LocalNavBarPadding
 import com.filmax.core.ui.preview.PhonePreviews
@@ -48,6 +50,7 @@ import com.filmax.feature.profile.common.ProfileScreenModel
 import com.filmax.feature.profile.common.ProfileSetting
 import com.filmax.feature.profile.common.ProfileSideEffect
 import com.filmax.feature.profile.common.ProfileState
+import com.filmax.feature.profile.common.sourceChoice
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -154,18 +157,37 @@ private fun ProfileColumn(state: ProfileState, actions: ProfileActions, modifier
         // Блока «Устройство» временно нет: device/info и device/settings отвечают 500,
         // и строка вела на нерабочий экран. Вернуть, когда бэкенд починят.
         AppGroup(actions = actions)
-        FilmaxSettingsGroup(title = "Аккаунт") {
-            // Выход — из текущего источника: второй остаётся с входом.
-            SettingRow(state, ProfileSetting.SOURCE, Icons.Filled.Dns, actions.onEvent)
-            FilmaxSettingsDivider()
-            FilmaxSettingsRow(
-                Icons.AutoMirrored.Filled.Logout,
-                "Выйти",
-                onClick = { actions.onEvent(ProfileEvent.AskLogout) },
-                destructive = true,
-            )
-        }
+        AccountGroup(state = state, onEvent = actions.onEvent)
         FilmaxVersionLabel(color = FilmaxColors.TextDim, modifier = Modifier.align(Alignment.CenterHorizontally))
+    }
+}
+
+/**
+ * «Аккаунт»: переключатель домашнего сервера и раздач, источник и выход. Выход — из текущего
+ * источника: второй остаётся с входом. Включённый переключатель открывает строку источника.
+ */
+@Composable
+private fun AccountGroup(state: ProfileState, onEvent: (ProfileEvent) -> Unit) {
+    FilmaxSettingsGroup(title = "Аккаунт") {
+        if (state.extraSourcesSwitchable) {
+            FilmaxToggleRow(
+                Icons.Filled.Science,
+                "Домашний сервер и торренты",
+                checked = state.extraSources,
+                onCheckedChange = { enabled -> onEvent(ProfileEvent.SetExtraSources(enabled)) },
+            )
+            FilmaxSettingsDivider()
+        }
+        if (state.sourceChoice) {
+            SettingRow(state, ProfileSetting.SOURCE, Icons.Filled.Dns, onEvent)
+            FilmaxSettingsDivider()
+        }
+        FilmaxSettingsRow(
+            Icons.AutoMirrored.Filled.Logout,
+            "Выйти",
+            onClick = { onEvent(ProfileEvent.AskLogout) },
+            destructive = true,
+        )
     }
 }
 

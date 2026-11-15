@@ -2,6 +2,7 @@ package com.filmax.feature.onboarding.common
 
 import com.filmax.core.domain.feedback.ClientInfo
 import com.filmax.core.domain.source.ContentSource
+import com.filmax.core.domain.source.HomeServer
 import com.filmax.core.presentation.input.KeyboardLayout
 import com.filmax.core.presentation.input.addressKeyboardRows
 import com.filmax.data.fake.FakeContentSourceRepository
@@ -17,6 +18,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -141,9 +143,45 @@ class HomeServerScreenModelTest {
         assertEquals(ContentSource.KINOPUB, sources.source.value)
     }
 
-    private fun model(tv: Boolean) = HomeServerScreenModel(
-        servers = servers,
-        sources = sources,
-        client = ClientInfo(appVersion = "2.8.0", isTv = tv, device = "Test", os = "Android 14"),
-    )
+    @Test
+    fun `hub without accounts signs in as soon as it answers`() = runTest(dispatcher) {
+        // Хаб пускает без пароля: вход — само подключение.
+        val hubs = FakeHomeServerRepository(found = listOf(HUB), password = "", source = ContentSource.HUB)
+        val hubSources = FakeContentSourceRepository(ContentSource.HUB, available = listOf(ContentSource.HUB))
+        val model = HomeServerScreenModel(hubs, hubSources, client(tv = true))
+        advanceUntilIdle()
+        assertTrue(model.states.value.hub)
+
+        model.dispatch(HomeServerEvent.Connect)
+        advanceUntilIdle()
+
+        // Ни кода, ни пароля: у хаба нет учётных записей.
+        assertEquals(HomeServerStep.SERVER, model.states.value.step)
+        assertNull(model.states.value.code)
+        assertTrue(hubs.signedIn)
+        assertEquals(ContentSource.HUB, hubSources.source.value)
+    }
+
+    @Test
+    fun `missing hub is not reported as a missing jellyfin`() = runTest(dispatcher) {
+        val hubs = FakeHomeServerRepository(found = emptyList(), source = ContentSource.HUB)
+        val model = HomeServerScreenModel(hubs, sources, client(tv = true))
+        advanceUntilIdle()
+
+        model.dispatch(HomeServerEvent.SetAddress("10.0.0.9"))
+        model.dispatch(HomeServerEvent.Connect)
+        advanceUntilIdle()
+
+        val error = assertNotNull(model.states.value.error)
+        assertFalse("Jellyfin" in error, error)
+        assertFalse(hubs.signedIn)
+    }
+
+    private fun model(tv: Boolean) = HomeServerScreenModel(servers = servers, sources = sources, client = client(tv))
+
+    private fun client(tv: Boolean) = ClientInfo(appVersion = "2.8.0", isTv = tv, device = "Test", os = "Android 14")
+
+    private companion object {
+        val HUB = HomeServer(address = "http://192.168.1.178:8097", name = "Mac mini", accounts = false)
+    }
 }

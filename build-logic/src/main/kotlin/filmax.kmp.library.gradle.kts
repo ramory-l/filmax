@@ -24,6 +24,14 @@ kotlin {
     tvosSimulatorArm64()
     tvosX64()
 
+    // JVM-таргет модуль заводит сам (например, протокол хаба для сервера на Маке), но байткод —
+    // под Java 17, как у Android: иначе он собирается под JDK сборки и не запустится на Temurin 17.
+    targets.withType<org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget>().configureEach {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+
     // Тесты общего кода — в commonTest: на Android-таргете их гоняет testDebugUnitTest (JVM),
     // а kotlin("test") сам подбирает раннер под платформу.
     sourceSets {
