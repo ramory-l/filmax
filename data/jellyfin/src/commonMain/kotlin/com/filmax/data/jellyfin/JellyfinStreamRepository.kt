@@ -50,10 +50,13 @@ internal class JellyfinStreamRepository(
         val video = source.mediaStreams.orEmpty().firstOrNull { it.type == JellyfinMapper.STREAM_VIDEO }
         val label = JellyfinMapper.qualityLabel(video?.width, video?.height) ?: ORIGINAL
         val height = label.takeWhile(Char::isDigit).toIntOrNull() ?: Int.MAX_VALUE
+        val remote = source.remoteUrl()
         // Файл как есть — только если сервер подтвердил, что плеер его сыграет: иначе фильм мог
         // бы пойти без звука, а такую ошибку плеер не увидит и на запасной поток не уйдёт.
-        val direct = directUrl(guid, source).takeIf { source.supportsDirectPlay == true }
-        val transcoded = source.transcodingUrl?.let(::absolute)
+        val direct = (remote ?: directUrl(guid, source)).takeIf { source.supportsDirectPlay == true }
+        // Запасного перекодирования у внешней ссылки нет: сервер перекодировал бы тот же источник,
+        // а сторож старта плеера уводил бы на него каждую раздачу, которая разгоняется дольше 8 с.
+        val transcoded = source.transcodingUrl?.let(::absolute)?.takeUnless { remote != null && direct != null }
         val original = if (direct != null || transcoded != null) {
             VideoFile(quality = label, hls4 = null, hls = transcoded, http = direct)
         } else {
@@ -83,6 +86,14 @@ internal class JellyfinStreamRepository(
         return context.api.playbackInfo(guid, body).mediaSources?.firstOrNull()
     }
 
+    /**
+     * Ссылка из `.strm` (поток TorrServer, IPTV): плеер идёт по ней сам, как официальные клиенты
+     * Jellyfin. Через `/Videos/{id}/stream` сервер проксирует её и обрывает запрос, если источник
+     * 100 с не отдал файл, — у раздачи, которая ещё ищет пиров, так бывает.
+     */
+    private fun MediaSourceDto.remoteUrl(): String? =
+        path?.takeIf { protocol == HTTP_PROTOCOL && isRemote == true && it.startsWith("http") }
+
     /** Файл целиком, с перемоткой по Range. Ключ — в адресе: плеер ходит за потоком без заголовков. */
     private fun directUrl(guid: String, source: MediaSourceDto): String {
         val session = context.session.require()
@@ -107,6 +118,7 @@ internal class JellyfinStreamRepository(
     private companion object {
         const val ORIGINAL = "Оригинал"
         const val EXTERNAL = "External"
+        const val HTTP_PROTOCOL = "Http"
         const val UNDEFINED_LANGUAGE = "und"
 
         /** Ступени ниже оригинала: битрейт, при котором сервер выбирает такое разрешение. */

@@ -16,6 +16,7 @@ import com.filmax.data.jellyfin.remote.dto.UserDataDto
 import com.filmax.data.jellyfin.remote.dto.UserDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -102,6 +103,13 @@ internal class JellyfinApi(
         client.post(url("Items/$guid/PlaybackInfo")) {
             withUser()
             jsonBody(body)
+            // Видео из .strm сервер при первом запуске разбирает прямо из источника: у раздачи
+            // TorrServer, которая ещё собирает пиров, это 10–20 с молчания, и таймаут движка (10 с)
+            // обрывал запуск ошибкой «Сервер долго отвечает». Дальше сервер отвечает из кеша.
+            timeout {
+                socketTimeoutMillis = PLAYBACK_INFO_TIMEOUT_MS
+                requestTimeoutMillis = PLAYBACK_INFO_TIMEOUT_MS
+            }
         }.body()
 
     suspend fun reportPlaybackStart(body: PlaybackProgressBody) {
@@ -140,6 +148,9 @@ internal class JellyfinApi(
     companion object {
         /** Поля карточки в выдаче: описание для hero, жанры и страна — для строк меты. */
         const val LIST_FIELDS = "Overview,Genres,ProductionLocations,ProviderIds"
+
+        /** Сколько ждать потоки под запуск: дольше раздача обычно не стартует вовсе. */
+        const val PLAYBACK_INFO_TIMEOUT_MS = 60_000L
     }
 }
 

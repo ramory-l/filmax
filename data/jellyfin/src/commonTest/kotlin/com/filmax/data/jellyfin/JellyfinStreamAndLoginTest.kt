@@ -4,6 +4,7 @@ import com.filmax.core.domain.common.getOrNull
 import com.filmax.core.domain.source.HomeServer
 import com.filmax.data.jellyfin.JellyfinFixtures.MOVIE
 import com.filmax.data.jellyfin.JellyfinFixtures.MOVIE_ID
+import com.filmax.data.jellyfin.JellyfinFixtures.TORRENT_STREAM
 import com.filmax.data.jellyfin.JellyfinFixtures.playbackInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
@@ -35,6 +36,24 @@ class JellyfinStreamAndLoginTest {
     @Test
     fun `file the player cannot handle is never offered directly`() = runTest {
         val original = playable(directPlay = false)?.files?.first()
+
+        assertNull(original?.http)
+        assertTrue(original?.hls.orEmpty().contains("master.m3u8"))
+    }
+
+    @Test
+    fun `link from a strm file is played directly and without a transcode backup`() = runTest {
+        val track = playable(directPlay = true, remote = true)
+
+        val original = track?.files?.first()
+        assertEquals(TORRENT_STREAM, original?.http)
+        assertNull(original?.hls)
+        assertEquals(listOf("1080p", "720p", "480p"), track?.files?.map { it.quality })
+    }
+
+    @Test
+    fun `strm link the player cannot handle goes through the server transcode`() = runTest {
+        val original = playable(directPlay = false, remote = true)?.files?.first()
 
         assertNull(original?.http)
         assertTrue(original?.hls.orEmpty().contains("master.m3u8"))
@@ -81,8 +100,8 @@ class JellyfinStreamAndLoginTest {
         assertEquals("qc", server.session.current?.token)
     }
 
-    private suspend fun playable(directPlay: Boolean) = FakeJellyfinServer(
-        mapOf("/Items/$MOVIE_ID" to MOVIE, "/Items/$MOVIE_ID/PlaybackInfo" to playbackInfo(directPlay)),
+    private suspend fun playable(directPlay: Boolean, remote: Boolean = false) = FakeJellyfinServer(
+        mapOf("/Items/$MOVIE_ID" to MOVIE, "/Items/$MOVIE_ID/PlaybackInfo" to playbackInfo(directPlay, remote)),
     ).run {
         signIn()
         val videos = JellyfinVideos(api, ids)

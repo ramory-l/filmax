@@ -49,6 +49,9 @@ internal data class PlaybackInfoResponseDto(
 @Serializable
 internal data class MediaSourceDto(
     @SerialName("Id") val id: String? = null,
+    @SerialName("Protocol") val protocol: String? = null,
+    @SerialName("Path") val path: String? = null,
+    @SerialName("IsRemote") val isRemote: Boolean? = null,
     @SerialName("SupportsDirectPlay") val supportsDirectPlay: Boolean? = null,
     @SerialName("TranscodingUrl") val transcodingUrl: String? = null,
     @SerialName("RunTimeTicks") val runTimeTicks: Long? = null,
