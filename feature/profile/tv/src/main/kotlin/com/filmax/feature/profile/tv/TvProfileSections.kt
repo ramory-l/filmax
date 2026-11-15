@@ -174,14 +174,26 @@ private fun UiRows(rows: SettingRows, enter: Int) {
 /** Ключ строки «Отключить обводку и свечение» в памяти фокуса экрана. */
 internal const val PLAIN_FOCUS_KEY = "plainFocus"
 
+/** Ключ строки «Домашний сервер и торренты» в памяти фокуса экрана. */
+internal const val EXTRA_SOURCES_KEY = "extraSources"
+
 /**
- * «Аккаунт» — источник контента и выход с подтверждением; «Приложение» — ручная проверка
- * обновлений и версия. Выход — из текущего источника: второй остаётся с входом.
+ * «Аккаунт» — домашний сервер и раздачи, источник контента и выход с подтверждением; «Приложение» —
+ * ручная проверка обновлений и версия. Выход — из текущего источника: второй остаётся с входом.
  */
 @Composable
 private fun AccountRows(rows: SettingRows, enter: Int) {
     val actions = rows.actions
     SettingsGroup("Аккаунт")
+    // Включённый переключатель открывает строку источника прямо под собой.
+    if (rows.state.extraSourcesSwitchable) {
+        TvSwitchRow(
+            label = "Домашний сервер и торренты",
+            checked = rows.state.extraSources,
+            onCheckedChange = { enabled -> actions.onEvent(ProfileEvent.SetExtraSources(enabled)) },
+            modifier = Modifier.fxEnter(enter).then(rows.screenFocus.item(EXTRA_SOURCES_KEY)),
+        )
+    }
     if (rows.state.sourceChoice) rows.Value(ProfileSetting.SOURCE, enter = enter)
     TvSettingRow(
         label = "Выйти из аккаунта",

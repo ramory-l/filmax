@@ -22,6 +22,7 @@ class ProfileScreenModel(
     private val playbackSettings = settings.playback
     private val themeSettings = settings.theme
     private val sources = settings.sources
+    private val extras = settings.extras
 
     init {
         onFetchData()
@@ -34,6 +35,11 @@ class ProfileScreenModel(
         screenModelScope {
             sources.source.collect { source ->
                 updateState { it.copy(source = source, sources = sources.available) }
+            }
+        }
+        screenModelScope {
+            extras.enabled.collect { enabled ->
+                updateState { it.copy(extraSources = enabled, extraSourcesSwitchable = extras.switchable) }
             }
         }
     }
@@ -67,6 +73,7 @@ class ProfileScreenModel(
             is ProfileEvent.SetSubtitlesEnabled ->
                 screenModelScope { playbackSettings.setSubtitleLanguage(subtitleLanguageFor(event.enabled)) }
             is ProfileEvent.SetPlainFocus -> screenModelScope { themeSettings.setPlainFocus(event.enabled) }
+            is ProfileEvent.SetExtraSources -> screenModelScope { extras.setEnabled(event.enabled) }
             is ProfileEvent.OpenSetting -> update { it.copy(setting = event.setting, settingOpen = true) }
             ProfileEvent.CloseSetting -> update { it.copy(settingOpen = false) }
             is ProfileEvent.ChooseOption -> chooseOption(event.index)

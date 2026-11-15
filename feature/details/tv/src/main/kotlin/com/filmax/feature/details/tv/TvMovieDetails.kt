@@ -178,13 +178,16 @@ private fun MovieButtons(
         actions.onTrailer?.let { onTrailer ->
             TvButton("Трейлер", onClick = onTrailer, style = TvButtonStyle.Secondary, leadingIcon = Icons.Rounded.Movie)
         }
-        // Выбранная раздача подписана качеством: видно, что «Смотреть» пойдёт из неё.
-        TvButton(
-            torrentButtonLabel(state.torrent),
-            onClick = { actions.onTorrents(null) },
-            style = TvButtonStyle.Secondary,
-            leadingIcon = Icons.Rounded.Download,
-        )
+        // Выбранная раздача подписана качеством: видно, что «Смотреть» пойдёт из неё. Раздачи
+        // выключены в Профиле — кнопки нет.
+        if (state.torrentsAvailable) {
+            TvButton(
+                torrentButtonLabel(state.torrent),
+                onClick = { actions.onTorrents(null) },
+                style = TvButtonStyle.Secondary,
+                leadingIcon = Icons.Rounded.Download,
+            )
+        }
     }
 }
 

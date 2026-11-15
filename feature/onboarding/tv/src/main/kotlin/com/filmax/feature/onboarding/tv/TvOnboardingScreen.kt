@@ -93,7 +93,7 @@ internal fun TvOnboardingScreen(
                 )
                 OnboardingStep.WELCOME -> TvWelcomeStep(
                     onLogin = { onEvent(OnboardingEvent.Login) },
-                    onHomeServer = { onEvent(OnboardingEvent.OpenHomeServer) },
+                    onHomeServer = { onEvent(OnboardingEvent.OpenHomeServer) }.takeIf { state.homeServerEntry },
                 )
             }
         }

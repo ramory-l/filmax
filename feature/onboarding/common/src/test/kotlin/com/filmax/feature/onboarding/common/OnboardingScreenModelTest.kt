@@ -4,6 +4,7 @@ import com.filmax.core.domain.source.ContentSource
 import com.filmax.data.fake.FakeAuthRepository
 import com.filmax.data.fake.FakeBackend
 import com.filmax.data.fake.FakeContentSourceRepository
+import com.filmax.data.fake.FakeExtraSources
 import com.filmax.data.fake.FakeLatency
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,7 +22,8 @@ import kotlin.test.assertTrue
 
 /**
  * С какого шага начинается вход. В основном приложении домашний сервер — альтернатива kino.pub, с
- * него можно вернуться; у «Плёнки» хаб — единственный источник, и шаг подключения — весь вход.
+ * него можно вернуться, а пока он выключен в Профиле — кнопки к нему нет; у «Плёнки» хаб —
+ * единственный источник, и шаг подключения — весь вход.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingScreenModelTest {
@@ -38,7 +40,7 @@ class OnboardingScreenModelTest {
     @Test
     fun `main app starts with kino pub and can come back from the home server`() = runTest(dispatcher) {
         val sources = FakeContentSourceRepository(ContentSource.JELLYFIN)
-        val model = OnboardingScreenModel(auth, sources)
+        val model = OnboardingScreenModel(auth, sources, FakeExtraSources())
         assertTrue(model.states.value.homeServer)
         assertTrue(model.states.value.canLeaveHomeServer)
 
@@ -52,7 +54,7 @@ class OnboardingScreenModelTest {
     @Test
     fun `torrent app opens straight on the hub and stays there`() = runTest(dispatcher) {
         val sources = FakeContentSourceRepository(ContentSource.HUB, available = listOf(ContentSource.HUB))
-        val model = OnboardingScreenModel(auth, sources)
+        val model = OnboardingScreenModel(auth, sources, FakeExtraSources())
         assertTrue(model.states.value.homeServer)
         assertFalse(model.states.value.canLeaveHomeServer)
 
@@ -61,5 +63,17 @@ class OnboardingScreenModelTest {
 
         assertTrue(model.states.value.homeServer)
         assertEquals(ContentSource.HUB, sources.source.value)
+    }
+
+    @Test
+    fun `home server entry is hidden until it is switched on in the profile`() = runTest(dispatcher) {
+        val sources = FakeContentSourceRepository()
+        val model = OnboardingScreenModel(auth, sources, FakeExtraSources(enabled = false))
+        assertFalse(model.states.value.homeServerEntry)
+
+        model.dispatch(OnboardingEvent.OpenHomeServer)
+        advanceUntilIdle()
+
+        assertFalse(model.states.value.homeServer)
     }
 }

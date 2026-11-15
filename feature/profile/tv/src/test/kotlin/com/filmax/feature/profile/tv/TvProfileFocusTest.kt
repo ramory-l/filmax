@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -21,6 +22,7 @@ import com.filmax.core.tv.designsystem.FilmaxTvTheme
 import com.filmax.data.fake.FakeAuthRepository
 import com.filmax.data.fake.FakeBackend
 import com.filmax.data.fake.FakeContentSourceRepository
+import com.filmax.data.fake.FakeExtraSources
 import com.filmax.data.fake.FakeLatency
 import com.filmax.data.fake.FakePlaybackSettingsRepository
 import com.filmax.data.fake.FakeThemeSettingsRepository
@@ -59,6 +61,7 @@ class TvProfileFocusTest {
     private val backend = FakeBackend(latency = FakeLatency.None)
     private val playback = FakePlaybackSettingsRepository()
     private val theme = FakeThemeSettingsRepository()
+    private val extras = FakeExtraSources(enabled = false)
 
     @Before
     fun leanbackDevice() {
@@ -111,6 +114,21 @@ class TvProfileFocusTest {
     }
 
     @Test
+    fun `home server switch opens the source row under itself`() {
+        showProfile()
+        val sourceRows = compose.onAllNodesWithText("Источник").fetchSemanticsNodes()
+        assertTrue(sourceRows.isEmpty(), "выбор источника виден без флага")
+        repeat(MAX_PRESSES) { if (!focusedHas("Домашний сервер и торренты")) press(Key.DirectionDown) }
+
+        press(Key.DirectionCenter)
+        assertTrue(extras.enabled.value, "переключатель не включил домашний сервер и торренты")
+        assertFocusedHas("Домашний сервер и торренты")
+
+        press(Key.DirectionDown)
+        assertFocusedHas("Источник")
+    }
+
+    @Test
     fun `logout asks with focus on cancel and back returns to the row`() {
         val model = showProfile()
         repeat(MAX_PRESSES) { if (!focusedHas("Выйти из аккаунта")) press(Key.DirectionDown) }
@@ -128,7 +146,7 @@ class TvProfileFocusTest {
         val model = ProfileScreenModel(
             user = FakeUserRepository(backend),
             auth = FakeAuthRepository(backend),
-            settings = ProfileSettings(playback, theme, FakeContentSourceRepository()),
+            settings = ProfileSettings(playback, theme, FakeContentSourceRepository(), extras),
         )
         compose.setContent {
             FilmaxTvTheme {

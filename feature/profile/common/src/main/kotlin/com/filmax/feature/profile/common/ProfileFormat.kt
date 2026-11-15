@@ -66,8 +66,11 @@ fun ProfileState.optionsOf(setting: ProfileSetting): List<String> = when (settin
     ProfileSetting.SOURCE -> sources.map { it.label }
 }
 
-/** Источник можно сменить: в приложении хаба он один, и строки выбора в Профиле нет. */
-val ProfileState.sourceChoice: Boolean get() = sources.size > 1
+/**
+ * Источник можно сменить: в приложении хаба он один, а в основном второй (домашний сервер)
+ * появляется, только когда включён переключатель «Домашний сервер и торренты».
+ */
+val ProfileState.sourceChoice: Boolean get() = sources.size > 1 && extraSources
 
 /** Текущее значение настройки — подпись справа в строке. */
 fun ProfileState.valueOf(setting: ProfileSetting): String = when (setting) {

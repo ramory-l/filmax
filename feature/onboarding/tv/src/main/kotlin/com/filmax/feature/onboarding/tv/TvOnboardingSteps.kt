@@ -51,9 +51,12 @@ private const val DEFAULT_VERIFICATION_URI = "kinopub.me/device"
 /** Ширина текстового блока. Строка длиннее ~460dp заставляет глаз искать начало следующей. */
 private val TextMaxWidth = 460.dp
 
-/** «Войти» — kino.pub по коду; «Домашний сервер» — своя медиатека Jellyfin в этой сети. */
+/**
+ * «Войти» — kino.pub по коду; «Домашний сервер» — своя медиатека Jellyfin в этой сети. [onHomeServer]
+ * null — домашний сервер выключен в Профиле, и кнопки нет.
+ */
 @Composable
-internal fun TvWelcomeStep(onLogin: () -> Unit, onHomeServer: () -> Unit) {
+internal fun TvWelcomeStep(onLogin: () -> Unit, onHomeServer: (() -> Unit)?) {
     val loginFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { loginFocus.requestFocus() }
 
@@ -82,12 +85,14 @@ internal fun TvWelcomeStep(onLogin: () -> Unit, onHomeServer: () -> Unit) {
                 leadingIcon = Icons.AutoMirrored.Filled.Login,
                 focusRequester = loginFocus,
             )
-            TvButton(
-                text = "Домашний сервер",
-                onClick = onHomeServer,
-                style = TvButtonStyle.Secondary,
-                leadingIcon = Icons.Filled.Dns,
-            )
+            onHomeServer?.let { open ->
+                TvButton(
+                    text = "Домашний сервер",
+                    onClick = open,
+                    style = TvButtonStyle.Secondary,
+                    leadingIcon = Icons.Filled.Dns,
+                )
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.common.getOrNull
 import com.filmax.core.domain.person.CastRepository
 import com.filmax.core.domain.source.ContentSourceRepository
+import com.filmax.core.domain.source.ExtraSources
 import com.filmax.core.domain.source.capabilities
 import com.filmax.core.domain.torrent.TorrentChoices
 import com.filmax.core.domain.usecase.watching.ToggleWatchlistUseCase
@@ -28,11 +29,15 @@ class DetailsScreenModel(
     private val toggleWatchlist: ToggleWatchlistUseCase,
     playback: DetailsPlayback,
 ) : BaseScreenModel<DetailsState, DetailsSideEffect, DetailsEvent>(
-    DetailsState(foldersAvailable = playback.sources.source.value.capabilities.folders),
+    DetailsState(
+        foldersAvailable = playback.sources.source.value.capabilities.folders,
+        torrentsAvailable = playback.extras.enabled.value,
+    ),
 ) {
 
     private val route = savedStateHandle.toRoute<DetailsRoute>()
     private val torrents = playback.torrents
+    private val extras = playback.extras
 
     /**
      * Запросы сезона: фокус на чипе применяется с задержкой ([DetailsEvent.SelectSeason]), стрелка
@@ -121,6 +126,9 @@ class DetailsScreenModel(
         screenModelScope {
             torrents.observe(route.itemId).collect { chosen -> updateState { it.copy(torrent = chosen) } }
         }
+        screenModelScope {
+            extras.enabled.collect { enabled -> updateState { it.copy(torrentsAvailable = enabled) } }
+        }
     }
 
     private fun toggleFav() {
@@ -144,7 +152,12 @@ private const val SEASON_SELECT_DELAY_MS = 250L
 private data class SeasonRequest(val number: Int, val delayMs: Long)
 
 /**
- * Откуда тайтл играет: источник (от него зависят папки-закладки) и раздача, выбранная вместо него.
- * Одним объектом — иначе конструктор [DetailsScreenModel] за порогом detekt.
+ * Откуда тайтл играет: источник (от него зависят папки-закладки), раздача, выбранная вместо него,
+ * и включены ли раздачи вообще. Одним объектом — иначе конструктор [DetailsScreenModel] за порогом
+ * detekt.
  */
-class DetailsPlayback(val sources: ContentSourceRepository, val torrents: TorrentChoices)
+class DetailsPlayback(
+    val sources: ContentSourceRepository,
+    val torrents: TorrentChoices,
+    val extras: ExtraSources,
+)

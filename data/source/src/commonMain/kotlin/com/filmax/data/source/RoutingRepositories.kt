@@ -11,6 +11,7 @@ import com.filmax.core.domain.catalog.model.MediaTrack
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.playback.StreamRepository
 import com.filmax.core.domain.search.SearchRepository
+import com.filmax.core.domain.source.ExtraSources
 import com.filmax.core.domain.torrent.TorrentStreams
 import com.filmax.core.domain.watchlist.WatchlistRepository
 import com.filmax.core.domain.watchlist.model.WatchlistItem
@@ -60,13 +61,17 @@ internal class RoutingWatchlistRepository(
 
 /**
  * Потоки: выбранная для тайтла раздача, а нет её (или этой серии в ней) — источник. Торренты —
- * не третий источник, а второй способ посмотреть тайтл любого из двух.
+ * не третий источник, а второй способ посмотреть тайтл любого из них. Пока раздачи выключены
+ * ([ExtraSources]), выбранная когда-то раздача не играет: кнопки, чтобы её сменить, тоже нет.
  */
 internal class RoutingStreamRepository(
     private val switch: SourceSwitch<StreamRepository>,
     private val torrents: TorrentStreams,
+    private val extras: ExtraSources,
 ) : StreamRepository {
 
-    override suspend fun playable(itemId: Int, track: MediaTrack): RequestResult<MediaTrack> =
-        torrents.playable(itemId, track) ?: switch.current.playable(itemId, track)
+    override suspend fun playable(itemId: Int, track: MediaTrack): RequestResult<MediaTrack> {
+        val torrent = if (extras.enabled.value) torrents.playable(itemId, track) else null
+        return torrent ?: switch.current.playable(itemId, track)
+    }
 }

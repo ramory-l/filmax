@@ -6,10 +6,13 @@ import com.filmax.core.domain.playback.StreamRepository
 import com.filmax.core.domain.search.SearchRepository
 import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.source.ContentSourceRepository
+import com.filmax.core.domain.source.ExtraSources
 import com.filmax.core.domain.user.UserRepository
 import com.filmax.core.domain.watching.WatchingRepository
 import com.filmax.core.domain.watchlist.WatchlistRepository
+import com.filmax.data.source.AlwaysOnExtraSources
 import com.filmax.data.source.ContentSourceRepositoryImpl
+import com.filmax.data.source.ExtraSourcesImpl
 import com.filmax.data.source.RoutingAuthRepository
 import com.filmax.data.source.RoutingCatalogRepository
 import com.filmax.data.source.RoutingSearchRepository
@@ -35,17 +38,20 @@ val sourceModule = module {
     single<UserRepository> { RoutingUserRepository(switch()) }
     single<WatchingRepository> { RoutingWatchingRepository(switch()) }
     single<WatchlistRepository> { RoutingWatchlistRepository(switch()) }
-    single<StreamRepository> { RoutingStreamRepository(switch(), torrents = get()) }
+    single<ExtraSources> { ExtraSourcesImpl(settings = get(), sources = get()) }
+    single<StreamRepository> { RoutingStreamRepository(switch(), torrents = get(), extras = get()) }
 }
 
 /**
- * Выбор источника приложения «Плёнка»: только хаб, без kino.pub и домашнего сервера.
+ * Выбор источника приложения «Плёнка»: только хаб, без kino.pub и домашнего сервера, а раздачи
+ * включены всегда.
  * Грузится после [sourceModule] и перекрывает его выбор источника — остальные переключатели те же.
  */
 val hubOnlySourceModule = module {
     single<ContentSourceRepository> {
         ContentSourceRepositoryImpl(settings = get(), available = listOf(ContentSource.HUB))
     }
+    single<ExtraSources> { AlwaysOnExtraSources }
 }
 
 /**

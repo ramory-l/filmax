@@ -15,6 +15,10 @@ data class ProfileState(
     val source: ContentSource = ContentSource.KINOPUB,
     /** Из каких источников можно выбирать; один — строки выбора нет вовсе (приложение хаба). */
     val sources: List<ContentSource> = listOf(ContentSource.KINOPUB, ContentSource.JELLYFIN),
+    /** Домашний сервер и раздачи включены (см. ExtraSources): без них выбирать источник не из чего. */
+    val extraSources: Boolean = false,
+    /** Переключатель домашнего сервера и раздач есть; у «Плёнки» они включены всегда. */
+    val extraSourcesSwitchable: Boolean = true,
     /** Фокус на ТВ без белой обводки и свечения (см. ThemeSettingsRepository.plainFocus). */
     val plainFocus: Boolean = false,
     /**
@@ -50,6 +54,9 @@ sealed interface ProfileEvent {
 
     /** Переключатель в «Настройках UI» на ТВ: фокус без белой обводки и свечения. */
     data class SetPlainFocus(val enabled: Boolean) : ProfileEvent
+
+    /** Переключатель «Домашний сервер и торренты» в «Аккаунте». */
+    data class SetExtraSources(val enabled: Boolean) : ProfileEvent
 
     /** «ОК» на строке со значением — панель с вариантами этой настройки. */
     data class OpenSetting(val setting: ProfileSetting) : ProfileEvent
