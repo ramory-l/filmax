@@ -196,6 +196,7 @@ class TvFolderPickerFocusTest {
         onPlay = {},
         onToggleWatchLater = {},
         onTrailer = null,
+        onTorrents = {},
         onOpenItem = {},
         onOpenPerson = { _, _ -> },
         onOpenDescription = {},

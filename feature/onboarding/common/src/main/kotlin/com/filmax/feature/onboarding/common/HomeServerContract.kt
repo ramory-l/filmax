@@ -2,7 +2,6 @@ package com.filmax.feature.onboarding.common
 
 import com.filmax.core.domain.source.HomeServer
 import com.filmax.core.presentation.input.KeyboardLayout
-import com.filmax.core.presentation.input.keyboardRows
 
 /** Шаг входа на домашний сервер. */
 enum class HomeServerStep {
@@ -71,13 +70,4 @@ sealed interface HomeServerEvent {
 sealed interface HomeServerSideEffect {
     /** Вход выполнен, источник — домашний сервер: экран уводит на Главную. */
     data object SignedIn : HomeServerSideEffect
-}
-
-/**
- * Ряды клавиатуры для адреса, имени и пароля: в цифровой раскладке — ещё и символы адреса
- * («.», «:», «/»), без них адрес сервера пультом не набрать.
- */
-fun serverKeyboardRows(layout: KeyboardLayout): List<List<String>> = when (layout) {
-    KeyboardLayout.DIGITS -> listOf("1234567890", ".:/-_@").map { row -> row.map(Char::toString) }
-    else -> keyboardRows(layout)
 }

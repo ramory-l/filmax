@@ -23,6 +23,7 @@ import androidx.tv.material3.Text
 import com.filmax.core.navigation.Destination
 import com.filmax.core.navigation.Navigator
 import com.filmax.core.presentation.input.KeyboardLayout
+import com.filmax.core.presentation.input.addressKeyboardRows
 import com.filmax.core.tv.designsystem.FxType
 import com.filmax.core.tv.designsystem.LocalFxColors
 import com.filmax.core.tv.designsystem.TvButton
@@ -43,7 +44,6 @@ import com.filmax.feature.onboarding.common.HomeServerSideEffect
 import com.filmax.feature.onboarding.common.HomeServerState
 import com.filmax.feature.onboarding.common.HomeServerStep
 import com.filmax.feature.onboarding.common.ServerKey
-import com.filmax.feature.onboarding.common.serverKeyboardRows
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -245,7 +245,7 @@ private fun ServerKeyboard(
     val key = { input: ServerKey -> dispatch(HomeServerEvent.Key(input)) }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TvKeyboard(
-            rows = serverKeyboardRows(state.layout),
+            rows = addressKeyboardRows(state.layout),
             actions = TvKeyboardActions(
                 onKey = { key(ServerKey.Letter(it)) },
                 onSpace = { key(ServerKey.Space) },

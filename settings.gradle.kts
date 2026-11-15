@@ -45,6 +45,8 @@ include(":data:feedback")
 include(":data:tvlink")
 // Домашний медиасервер Jellyfin: своя медиатека в локальной сети вместо kino.pub.
 include(":data:jellyfin")
+// Раздачи с трекеров через TorrServer: поиск, выбор по качеству и озвучке, поток серии.
+include(":data:torrents")
 // Переключатель источника: экраны получают репозитории kino.pub или домашнего сервера.
 include(":data:source")
 // Фейковый data-слой без сети: сборка `mock` и юнит-тесты ScreenModel'ей.
@@ -77,6 +79,8 @@ include(":feature:details:tv")
 include(":feature:player:common")
 include(":feature:player:mobile")
 include(":feature:player:tv")
+include(":feature:torrents:common")
+include(":feature:torrents:tv")
 include(":feature:tvlink:common")
 include(":feature:tvlink:mobile")
 include(":feature:tvlink:tv")

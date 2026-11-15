@@ -42,3 +42,13 @@ fun erasedText(text: String): String = text.dropLast(1)
  * набирают адрес сервера, имя пользователя и пароль, где регистр и каждый символ значимы.
  */
 fun typedRaw(text: String, key: String, maxLength: Int = Int.MAX_VALUE): String = (text + key).take(maxLength)
+
+/**
+ * Ряды клавиатуры для адреса сервера, имени и пароля: в цифровой раскладке — ещё и символы адреса
+ * («.», «:», «/»), без них адрес сервера пультом не набрать. Общие для входа на домашний сервер и
+ * подключения TorrServer.
+ */
+fun addressKeyboardRows(layout: KeyboardLayout): List<List<String>> = when (layout) {
+    KeyboardLayout.DIGITS -> listOf("1234567890", ".:/-_@").map { row -> row.map(Char::toString) }
+    else -> keyboardRows(layout)
+}

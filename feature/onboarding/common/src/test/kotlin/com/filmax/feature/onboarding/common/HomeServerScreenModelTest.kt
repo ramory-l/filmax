@@ -3,6 +3,7 @@ package com.filmax.feature.onboarding.common
 import com.filmax.core.domain.feedback.ClientInfo
 import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.presentation.input.KeyboardLayout
+import com.filmax.core.presentation.input.addressKeyboardRows
 import com.filmax.data.fake.FakeContentSourceRepository
 import com.filmax.data.fake.FakeHomeServerRepository
 import kotlinx.coroutines.Dispatchers
@@ -122,7 +123,7 @@ class HomeServerScreenModelTest {
         assertEquals("192.168.1.5:809", model.states.value.address)
         assertEquals("anna", model.states.value.username)
         assertEquals(KeyboardLayout.DIGITS, model.states.value.layout)
-        assertTrue(serverKeyboardRows(KeyboardLayout.DIGITS).flatten().containsAll(listOf(".", ":", "/")))
+        assertTrue(addressKeyboardRows(KeyboardLayout.DIGITS).flatten().containsAll(listOf(".", ":", "/")))
     }
 
     @Test

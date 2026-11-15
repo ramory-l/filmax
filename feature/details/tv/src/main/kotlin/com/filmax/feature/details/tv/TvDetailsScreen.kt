@@ -124,6 +124,8 @@ internal data class DetailsActions(
     val onToggleWatchLater: () -> Unit,
     /** null — у тайтла нет играбельного трейлера, кнопки нет. */
     val onTrailer: (() -> Unit)?,
+    /** Раздачи тайтла; видео — что запустится из выбранной, null — фильм целиком. */
+    val onTorrents: (VideoRef?) -> Unit,
     val onOpenItem: (Int) -> Unit,
     val onOpenPerson: (name: String, isDirector: Boolean) -> Unit,
     val onOpenDescription: () -> Unit,
@@ -138,6 +140,7 @@ internal data class DetailsActions(
             onPlay = {},
             onToggleWatchLater = {},
             onTrailer = null,
+            onTorrents = {},
             onOpenItem = {},
             onOpenPerson = { _, _ -> },
             onOpenDescription = {},
@@ -155,6 +158,7 @@ private fun detailsActions(item: Item, screenModel: DetailsScreenModel, navigato
         onPlay = { video -> navigator.open(Destination.Player(itemId = item.id, video = video)) },
         onToggleWatchLater = { screenModel.dispatch(DetailsEvent.ToggleFav) },
         onTrailer = trailerUrl?.let { url -> { navigator.open(Destination.Trailer(url = url, title = item.title)) } },
+        onTorrents = { video -> navigator.open(Destination.Torrents(itemId = item.id, video = video)) },
         onOpenItem = { id -> navigator.open(Destination.Details(id)) },
         onOpenPerson = { name, isDirector ->
             navigator.open(Destination.Filmography(name = name, isDirector = isDirector))

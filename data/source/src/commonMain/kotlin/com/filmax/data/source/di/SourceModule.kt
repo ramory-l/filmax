@@ -35,7 +35,7 @@ val sourceModule = module {
     single<UserRepository> { RoutingUserRepository(switch()) }
     single<WatchingRepository> { RoutingWatchingRepository(switch()) }
     single<WatchlistRepository> { RoutingWatchlistRepository(switch()) }
-    single<StreamRepository> { RoutingStreamRepository(switch()) }
+    single<StreamRepository> { RoutingStreamRepository(switch(), torrents = get()) }
 }
 
 private inline fun <reified T : Any> Scope.switch(): SourceSwitch<T> = SourceSwitch(

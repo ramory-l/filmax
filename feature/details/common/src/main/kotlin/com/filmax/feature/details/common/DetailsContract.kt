@@ -3,6 +3,7 @@ package com.filmax.feature.details.common
 import com.filmax.core.domain.catalog.model.Item
 import com.filmax.core.domain.catalog.model.MediaTrack
 import com.filmax.core.domain.person.CastMember
+import com.filmax.core.domain.torrent.ChosenRelease
 
 data class DetailsState(
     val loading: Boolean = true,
@@ -23,6 +24,8 @@ data class DetailsState(
     val descriptionOpen: Boolean = false,
     /** У источника есть папки-закладки: без них кнопки «В папку» нет вовсе. */
     val foldersAvailable: Boolean = true,
+    /** Раздача, из которой тайтл играет вместо источника; null — играет источник. */
+    val torrent: ChosenRelease? = null,
 ) {
     /** Серии выбранного сезона; у фильма — пусто. */
     val seasonEpisodes: List<MediaTrack>

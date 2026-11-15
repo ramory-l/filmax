@@ -231,6 +231,8 @@ dependencies {
     // Домашний сервер и переключатель источника: экраны получают репозитории выбранного.
     implementation(project(":data:jellyfin"))
     implementation(project(":data:source"))
+    // Раздачи через TorrServer: второй способ посмотреть тайтл любого источника.
+    implementation(project(":data:torrents"))
     // Общий с iOS состав data-модулей и use case'ов: один список на обе платформы.
     implementation(project(":shared"))
     // Фейки только в сборке mock: main-код о них не знает, подключает MockFilmaxApplication.
@@ -266,6 +268,7 @@ dependencies {
     implementation(project(":feature:feedback:tv"))
     implementation(project(":feature:details:tv"))
     implementation(project(":feature:player:tv"))
+    implementation(project(":feature:torrents:tv"))
     implementation(project(":feature:tvlink:tv"))
 
     // Compose

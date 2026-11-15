@@ -11,6 +11,7 @@ import com.filmax.core.domain.catalog.model.MediaTrack
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.playback.StreamRepository
 import com.filmax.core.domain.search.SearchRepository
+import com.filmax.core.domain.torrent.TorrentStreams
 import com.filmax.core.domain.watchlist.WatchlistRepository
 import com.filmax.core.domain.watchlist.model.WatchlistItem
 import kotlinx.coroutines.flow.Flow
@@ -57,8 +58,15 @@ internal class RoutingWatchlistRepository(
     override suspend fun adopt(item: WatchlistItem) = switch.current.adopt(item)
 }
 
-internal class RoutingStreamRepository(private val switch: SourceSwitch<StreamRepository>) : StreamRepository {
+/**
+ * Потоки: выбранная для тайтла раздача, а нет её (или этой серии в ней) — источник. Торренты —
+ * не третий источник, а второй способ посмотреть тайтл любого из двух.
+ */
+internal class RoutingStreamRepository(
+    private val switch: SourceSwitch<StreamRepository>,
+    private val torrents: TorrentStreams,
+) : StreamRepository {
 
     override suspend fun playable(itemId: Int, track: MediaTrack): RequestResult<MediaTrack> =
-        switch.current.playable(itemId, track)
+        torrents.playable(itemId, track) ?: switch.current.playable(itemId, track)
 }
