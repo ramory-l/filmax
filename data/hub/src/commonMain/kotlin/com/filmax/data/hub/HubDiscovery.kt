@@ -13,6 +13,7 @@ import io.ktor.utils.io.core.readText
 import io.ktor.utils.io.core.writeText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Хаб, ответивший в сети: адрес API и имя для списка найденных. */
@@ -22,14 +23,22 @@ internal data class FoundHub(val address: String, val name: String)
  * Поиск хаба в локальной сети: широковещательный UDP-вопрос на порт хаба. Адрес берётся из
  * отправителя ответа — хаб не знает, каким из своих адресов виден телевизору. Ничего не нашлось
  * (роутер режет широковещание) — пустой список, адрес вводят вручную.
+ *
+ * Вопрос уходит и на общий 255.255.255.255, и на адреса своих подсетей ([broadcasts]): хаб на
+ * macOS слышит только второй (см. [localBroadcasts]).
  */
-internal class HubDiscovery(private val dispatcher: CoroutineDispatcher) {
+internal class HubDiscovery(
+    private val dispatcher: CoroutineDispatcher,
+    private val broadcasts: () -> List<String> = ::localBroadcasts,
+) {
 
     // Граница ошибок поиска: любой сбой сокета значит «никого не нашли», а не падение экрана, и
     // причина сбоя экрану не нужна — ему нечего с ней делать, кроме как предложить ввести адрес.
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     suspend fun find(): List<FoundHub> = try {
-        listen()
+        // Экран зовёт поиск из главного потока, а сокетам там не место: Android роняет сетевые
+        // вызовы в нём (NetworkOnMainThreadException), и поиск молча ничего не находил.
+        withContext(dispatcher) { listen() }
     } catch (cancellation: CancellationException) {
         throw cancellation
     } catch (failure: Exception) {
@@ -38,8 +47,12 @@ internal class HubDiscovery(private val dispatcher: CoroutineDispatcher) {
 
     private suspend fun listen(): List<FoundHub> = SelectorManager(dispatcher).use { selector ->
         aSocket(selector).udp().bind(InetSocketAddress(ANY_HOST, 0)) { broadcast = true }.use { socket ->
-            val question = buildPacket { writeText(HUB_DISCOVERY_QUESTION) }
-            socket.send(Datagram(question, InetSocketAddress(BROADCAST, HUB_DEFAULT_PORT)))
+            // Пакет вопроса вычитывается при отправке — на каждый адрес свой. Не ушёл на один адрес
+            // (у сети нет маршрута для 255.255.255.255) — остальные всё равно спрашиваем.
+            (listOf(BROADCAST) + broadcasts()).distinct().forEach { target ->
+                val question = buildPacket { writeText(HUB_DISCOVERY_QUESTION) }
+                runCatching { socket.send(Datagram(question, InetSocketAddress(target, HUB_DEFAULT_PORT))) }
+            }
             val found = mutableListOf<FoundHub>()
             withTimeoutOrNull(LISTEN_MS) {
                 while (true) {
@@ -51,7 +64,7 @@ internal class HubDiscovery(private val dispatcher: CoroutineDispatcher) {
     }
 
     private fun Datagram.toFoundHub(): FoundHub? {
-        val host = (address as? InetSocketAddress)?.hostname ?: return null
+        val host = (address as? InetSocketAddress)?.ipv4() ?: return null
         // Чужой ответ на тот же порт — не хаб: пропускаем, а не роняем поиск.
         return runCatching { hubJson.decodeFromString(HubDiscoveryAnswer.serializer(), packet.readText()) }
             .getOrNull()
