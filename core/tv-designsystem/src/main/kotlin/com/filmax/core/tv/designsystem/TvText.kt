@@ -32,7 +32,8 @@ private const val FADE_EDGE_START = 0.85f
 
 /**
  * Название карточки — всегда одна строка. Без фокуса — многоточие, в фокусе — бегущая строка
- * с затуханием правого края: виден весь заголовок, а карточка не растёт.
+ * с затуханием правого края: виден весь заголовок, а карточка не растёт. Сколько раз она
+ * пробегает — [cardTitleMarqueeIterations].
  */
 @Composable
 fun TvCardTitle(
@@ -41,20 +42,21 @@ fun TvCardTitle(
     modifier: Modifier = Modifier,
     style: TextStyle = FxType.cardTitle,
 ) {
-    val marquee = focused && !LocalReducedMotion.current
+    val iterations =
+        if (focused) cardTitleMarqueeIterations(LocalReducedMotion.current, LocalLightEffects.current) else null
     Text(
         title,
         style = style,
         color = LocalFxColors.current.text,
         maxLines = 1,
         softWrap = false,
-        overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis,
+        overflow = if (iterations != null) TextOverflow.Clip else TextOverflow.Ellipsis,
         modifier = modifier.then(
-            if (marquee) {
+            if (iterations != null) {
                 Modifier
                     .fadeEndEdge()
                     .basicMarquee(
-                        iterations = Int.MAX_VALUE,
+                        iterations = iterations,
                         initialDelayMillis = MARQUEE_DELAY_MS,
                         repeatDelayMillis = MARQUEE_REPEAT_DELAY_MS,
                         spacing = MarqueeSpacing.fractionOfContainer(1f / 3f),
@@ -65,6 +67,17 @@ fun TvCardTitle(
             },
         ),
     )
+}
+
+/**
+ * Сколько раз пробегает название в фокусе; `null` — бегущей строки нет, название с многоточием.
+ * В облегчённом режиме — один проход: название можно дочитать, а потом экран затихает. Бесконечная
+ * строка не давала ему простаивать — ~50 кадров в секунду, пока карточка в фокусе.
+ */
+internal fun cardTitleMarqueeIterations(reducedMotion: Boolean, lightEffects: Boolean): Int? = when {
+    reducedMotion -> null
+    lightEffects -> 1
+    else -> Int.MAX_VALUE
 }
 
 /** Затухание правого края: текст уходит под край мягко, а не обрубается. */
