@@ -4,11 +4,12 @@ import com.filmax.app.BuildConfig
 import com.filmax.core.presentation.BaseScreenModel
 import kotlinx.coroutines.CoroutineDispatcher
 
-/** Боевой applicationId: только он обновляется release-APK из GitHub Releases. */
-private const val RELEASE_APPLICATION_ID = "com.filmax.app"
-
-/** Текущая сборка — та самая, которую обновляет релизный APK. */
-private val IS_RELEASE_BUILD = BuildConfig.APPLICATION_ID == RELEASE_APPLICATION_ID
+/**
+ * Текущую сборку обновляет релизный APK: это release Filmax и «Плёнка» — их CI публикует в
+ * Releases. Раньше здесь сверялся пакет com.filmax.app, и «Плёнка» со своим пакетом обновлений
+ * не видела.
+ */
+private val IS_RELEASE_BUILD = BuildConfig.SELF_UPDATE
 
 /** Шаг публикации прогресса: чаще обновлять state незачем — это прыжок на main на каждый чанк. */
 private const val PROGRESS_STEP = 0.01f
@@ -16,8 +17,8 @@ private const val PROGRESS_STEP = 0.01f
 /**
  * Проверка и скачивание обновлений приложения (GitHub Releases, см. [GitHubUpdateRepository]).
  *
- * Debug и demo стоят под другими applicationId (`.debug`/`.demo`) — для них release-APK не
- * обновление, а вторая установка, поэтому проверка выключена.
+ * Debug, demo, mock и benchmark стоят под другими applicationId (`.debug`, `.demo`…) — для них
+ * release-APK не обновление, а вторая установка, поэтому проверка выключена (`BuildConfig.SELF_UPDATE`).
  */
 class AppUpdateScreenModel(
     private val repository: GitHubUpdateRepository,
