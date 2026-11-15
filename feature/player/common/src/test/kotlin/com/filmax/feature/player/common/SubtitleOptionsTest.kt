@@ -21,6 +21,19 @@ class SubtitleOptionsTest {
     }
 
     @Test
+    fun `tracks of one language give a single option, so menu keys stay unique`() {
+        val repeated = subtitleOptions(
+            listOf(
+                SubtitleTrack(lang = "spa", url = "https://cdn/es.srt", shiftMs = 0),
+                SubtitleTrack(lang = "spa", url = "https://cdn/es-419.srt", shiftMs = 0),
+                SubtitleTrack(lang = "rus", url = "https://cdn/ru.srt", shiftMs = 0),
+                SubtitleTrack(lang = "ru", url = "https://cdn/ru-forced.srt", shiftMs = 0),
+            ),
+        )
+        assertEquals(listOf(PlaybackSettings.SubtitleOff, "spa", "Русский"), repeated.map { it.label })
+    }
+
+    @Test
     fun `language from settings is picked when the track has it, otherwise subtitles stay off`() {
         assertEquals("rus", options.preferred("Русский").lang)
         assertEquals(null, options.preferred("Deutsch").lang)
