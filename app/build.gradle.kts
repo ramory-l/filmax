@@ -113,6 +113,9 @@ android {
         buildConfigField("String", "UPDATE_GITHUB_REPO", "\"malyi-m-dev/filmax\"")
         // Релизы двух приложений лежат в одном репозитории и различаются префиксом тега.
         buildConfigField("String", "UPDATE_TAG_PREFIX", "\"v\"")
+        // Обновляется ли сборка сама из Releases: да — только те, чей APK релизный CI и публикует
+        // (release и plenka). Остальным релизный APK не обновление, а чужой пакет.
+        buildConfigField("boolean", "SELF_UPDATE", "false")
         // Firebase-проект для отзывов (Firestore по REST). Не секрет: тот же id лежит в
         // google-services.json и уходит в каждом запросе.
         buildConfigField("String", "FIREBASE_PROJECT_ID", "\"filmax-5ef9f\"")
@@ -155,6 +158,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            buildConfigField("boolean", "SELF_UPDATE", "true")
         }
         // Demo-сборка: как release (R8 + подпись), но с зашитым токеном (стартует авторизованной
         // на любом устройстве) и отдельным пакетом/меткой «Filmax Demo» — не путать с боевой.
@@ -168,6 +172,7 @@ android {
                 ?.let { signingConfig = it }
             buildConfigField("String", "DEMO_ACCESS_TOKEN", "\"$demoAccessToken\"")
             buildConfigField("String", "DEMO_REFRESH_TOKEN", "\"$demoRefreshToken\"")
+            buildConfigField("boolean", "SELF_UPDATE", "false")
         }
         // Mock-сборка: debug без бэкенда — data-слой подменён фейками (:data:fake, см.
         // src/mock), вход не нужен, данные выдуманные. Для проверки UI на эмуляторах, куда живой
@@ -190,6 +195,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
             proguardFiles("benchmark-rules.pro")
+            buildConfigField("boolean", "SELF_UPDATE", "false")
         }
         // «Плёнка» — второе приложение рядом с Filmax: те же экраны, но источник один — домашний хаб
         // на компьютере (TMDB-витрина, видео из раздач), без kino.pub и Jellyfin. Пакет свой, не
@@ -201,6 +207,7 @@ android {
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
                 ?: signingConfigs.getByName("debug")
             buildConfigField("String", "UPDATE_TAG_PREFIX", "\"$plenkaTagPrefix\"")
+            buildConfigField("boolean", "SELF_UPDATE", "true")
         }
     }
 
