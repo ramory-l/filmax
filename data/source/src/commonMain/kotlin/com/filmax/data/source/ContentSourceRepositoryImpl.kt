@@ -39,5 +39,5 @@ internal class ContentSourceRepositoryImpl(
     }
 }
 
-/** Источники основного приложения: хаб — у отдельного «Filmax Торренты». */
+/** Источники основного приложения: хаб — у отдельного приложения «Плёнка». */
 internal val MAIN_SOURCES = listOf(ContentSource.KINOPUB, ContentSource.JELLYFIN)

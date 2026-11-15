@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Название продукта в вордмарке и подписи версии. Второе приложение («Плёнка», build type plenka)
+     перекрывает его своим ресурсом с тем же именем: экраны общие, а бренд у сборки свой. -->
+<resources>
+    <string name="brand_name">Filmax</string>
+</resources>

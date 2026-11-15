@@ -16,8 +16,8 @@ if [ ! -f "$CONFIG/env" ]; then
     # Адрес TorrServer — как его видит телевизор: по IP Мака в домашней сети, а не localhost.
     address="$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo 127.0.0.1)"
     cat > "$CONFIG/env" <<EOF
-# Настройки Filmax Hub. Токен TMDB (API Read Access Token) — только здесь, не в репозитории.
-FILMAX_HUB_NAME="Filmax Hub"
+# Настройки домашнего хаба «Плёнки». Токен TMDB (API Read Access Token) — только здесь, не в репозитории.
+FILMAX_HUB_NAME="Домашний хаб"
 TORRSERVER_URL=http://$address:8092
 TMDB_TOKEN=
 EOF
@@ -36,4 +36,4 @@ rm -rf "$TARGET/app"
 cp -R "$SOURCE" "$TARGET/app"
 sed "s|@HOME@|$HOME|g" "$SOURCE/deploy/$LABEL.plist" > "$PLIST"
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
-echo "Filmax Hub установлен в $TARGET, лог — $HOME/services/logs/$LABEL.log"
+echo "Домашний хаб установлен в $TARGET, лог — $HOME/services/logs/$LABEL.log"

@@ -9,6 +9,10 @@ plugins {
     id("filmax.detekt")
 }
 
+// Пакет «Плёнки» — свой, а не суффикс Filmax: это отдельный продукт со своим именем, и на ТВ две
+// иконки. Build type умеет только дописывать к пакету, поэтому он задаётся в androidComponents.
+val plenkaApplicationId = "ru.malyi.plenka"
+
 // Firebase (Crashlytics) включается только при наличии конфига: локальная сборка и PR-CI без
 // секретов не должны падать. Файл содержит ключи проекта Firebase — в публичном репо его не
 // держим (.gitignore); локально кладётся в app/, в CI декодируется из секрета
@@ -32,7 +36,7 @@ if (googleServicesConfig.exists()) {
         "Demo" to "com.filmax.app.demo",
         "Mock" to "com.filmax.app.mock",
         "Benchmark" to "com.filmax.app.bench",
-        "Tor" to "com.filmax.app.tor",
+        "Plenka" to plenkaApplicationId,
         "Release" to "com.filmax.app",
     )
     val unregisteredVariants = variantPackages.filterValues { it !in registeredPackages }.keys
@@ -180,14 +184,12 @@ android {
             matchingFallbacks += "release"
             proguardFiles("benchmark-rules.pro")
         }
-        // «Filmax Торренты» — второе приложение рядом с основным: те же экраны, но источник один — свой
-        // хаб на компьютере (TMDB-витрина, видео из раздач), без kino.pub и Jellyfin. Свой пакет и
-        // метка — на ТВ две иконки, у каждой свой вход и своя история. Подпись — боевая, если ключ есть,
-        // иначе debug: сборку без секретов всё равно можно поставить на эмулятор.
-        create("tor") {
+        // «Плёнка» — второе приложение рядом с Filmax: те же экраны, но источник один — домашний хаб
+        // на компьютере (TMDB-витрина, видео из раздач), без kino.pub и Jellyfin. Пакет свой, не
+        // суффикс Filmax (см. plenkaApplicationId): это отдельный продукт со своим именем. Подпись —
+        // боевая, если ключ есть, иначе debug: сборку без секретов всё равно можно поставить на эмулятор.
+        create("plenka") {
             initWith(getByName("release"))
-            applicationIdSuffix = ".tor"
-            versionNameSuffix = "-tor"
             matchingFallbacks += "release"
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
                 ?: signingConfigs.getByName("debug")
@@ -222,6 +224,12 @@ android {
     }
 }
 
+androidComponents {
+    onVariants(selector().withBuildType("plenka")) { variant ->
+        variant.applicationId.set(plenkaApplicationId)
+    }
+}
+
 dependencies {
     // Core
     implementation(project(":core:network"))
@@ -246,7 +254,7 @@ dependencies {
     implementation(project(":data:source"))
     // Раздачи через TorrServer: второй способ посмотреть тайтл любого источника.
     implementation(project(":data:torrents"))
-    // Свой хаб на компьютере — единственный источник сборки «Filmax Торренты» (src/tor).
+    // Свой хаб на компьютере — единственный источник сборки «Плёнка» (src/plenka).
     implementation(project(":data:hub"))
     // Общий с iOS состав data-модулей и use case'ов: один список на обе платформы.
     implementation(project(":shared"))

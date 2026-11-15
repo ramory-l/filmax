@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Метка второго приложения: на ТВ оно стоит рядом с основным Filmax, и иконки не должны путаться. -->
-<resources>
-    <string name="app_name">Filmax Торренты</string>
-</resources>

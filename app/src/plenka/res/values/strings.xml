@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Название второго приложения: на ТВ оно стоит рядом с Filmax, иконки и вордмарк не должны путаться.
+     brand_name перекрывает ресурс core:designsystem — его берут вордмарк и подпись версии. -->
+<resources>
+    <string name="app_name">Плёнка</string>
+    <string name="brand_name">Плёнка</string>
+</resources>

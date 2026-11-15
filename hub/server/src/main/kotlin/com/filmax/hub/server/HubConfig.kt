@@ -25,7 +25,7 @@ internal data class HubConfig(
             torrServer = environment["TORRSERVER_URL"]?.trim()?.takeIf { it.isNotEmpty() },
         )
 
-        private const val DEFAULT_NAME = "Filmax Hub"
+        private const val DEFAULT_NAME = "Домашний хаб"
         private const val DEFAULT_CACHE = "Library/Caches/filmax-hub"
     }
 }

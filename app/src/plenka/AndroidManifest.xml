@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- «Filmax Торренты» подменяет Application: TorFilmaxApplication оставляет единственным источником
+<!-- «Плёнка» подменяет Application: PlenkaApplication оставляет единственным источником домашний
      хаб. Остальной манифест — из main. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name=".TorFilmaxApplication"
+        android:name=".PlenkaApplication"
         tools:replace="android:name" />
 
 </manifest>

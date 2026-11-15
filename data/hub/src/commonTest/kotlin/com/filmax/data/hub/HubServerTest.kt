@@ -13,7 +13,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Шаг «Домашний сервер» в приложении «Filmax Торренты»: подключиться к хабу — уже войти. */
+/** Шаг «Домашний сервер» в приложении «Плёнка»: подключиться к хабу — уже войти. */
 class HubServerTest {
 
     private val hub = FakeHub()

@@ -187,7 +187,7 @@ class HomeServerScreenModel(
         fun connectError(error: RequestResult.Error, hub: Boolean): String = when (error.toAppError()) {
             AppError.Offline, AppError.Timeout ->
                 "Сервер не отвечает. Проверьте адрес и что устройство в той же сети"
-            AppError.NotFound -> if (hub) "По этому адресу нет хаба Filmax" else "По этому адресу не Jellyfin"
+            AppError.NotFound -> if (hub) "По этому адресу нет хаба" else "По этому адресу не Jellyfin"
             else -> error.message ?: "Не удалось подключиться"
         }
 

@@ -16,10 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.sp
+import com.filmax.core.designsystem.R
 import com.filmax.core.navigation.Destination
 import com.filmax.core.navigation.Navigator
 import com.filmax.core.tv.designsystem.FilmaxTvTheme
@@ -107,7 +109,8 @@ internal fun TvOnboardingScreen(
 @Composable
 internal fun Wordmark() {
     Text(
-        "FILMAX",
+        // Бренд — ресурсом: у «Плёнки» он свой, а экран входа общий.
+        stringResource(R.string.brand_name).uppercase(),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = 4.sp,

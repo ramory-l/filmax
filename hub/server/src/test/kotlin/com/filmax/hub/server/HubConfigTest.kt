@@ -13,7 +13,7 @@ class HubConfigTest {
         val config = HubConfig.fromEnvironment(emptyMap())
 
         assertEquals(HUB_DEFAULT_PORT, config.port)
-        assertEquals("Filmax Hub", config.name)
+        assertEquals("Домашний хаб", config.name)
         assertNull(config.tmdbToken)
         assertNull(config.torrServer)
     }

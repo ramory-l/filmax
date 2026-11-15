@@ -35,7 +35,7 @@ val ContentSource.label: String
     get() = when (this) {
         ContentSource.KINOPUB -> "kino.pub"
         ContentSource.JELLYFIN -> "Домашний сервер"
-        ContentSource.HUB -> "Filmax Hub"
+        ContentSource.HUB -> "Домашний хаб"
     }
 
 /** Чем источник без подписки заменяет её — подпись карточки доступа в Профиле. */
