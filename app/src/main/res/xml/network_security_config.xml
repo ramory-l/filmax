@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Домашний сервер Jellyfin и потоки TorrServer живут в своей сети на http по IP-адресу
+     (http://192.168.1.10:8096): сертификат на такой адрес не выпустить, и официальные клиенты
+     Jellyfin тоже разрешают http. Без этого Android 9+ рвёт соединение ещё до запроса. kino.pub и
+     его CDN и так ходят по https. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -49,8 +49,16 @@ internal object JellyfinFixtures {
         ]}
     """.trimIndent()
 
-    fun playbackInfo(directPlay: Boolean) = """
+    /** Поток раздачи TorrServer, как его записывает `.strm`-файл медиатеки. */
+    const val TORRENT_STREAM = "http://192.168.1.178:8092/stream/film.mkv?link=b63eaa97&index=2&play"
+
+    /** Источник из `.strm`: ссылку Jellyfin отдаёт в Path с протоколом Http. */
+    private const val REMOTE_ORIGIN = """"Protocol":"Http","IsRemote":true,"Path":"$TORRENT_STREAM","""
+    private const val FILE_ORIGIN = """"Protocol":"File","IsRemote":false,"""
+
+    fun playbackInfo(directPlay: Boolean, remote: Boolean = false) = """
         {"MediaSources":[{"Id":"ms1","SupportsDirectPlay":$directPlay,"RunTimeTicks":59400000000,
+          ${if (remote) REMOTE_ORIGIN else FILE_ORIGIN}
           "TranscodingUrl":"/videos/$MOVIE_ID/master.m3u8?MediaSourceId=ms1&ApiKey=secret-token",
           "MediaStreams":[
             {"Type":"Video","Index":0,"Width":1920,"Height":816},
