@@ -8,6 +8,7 @@ import com.filmax.data.fake.FakeCatalogRepository
 import com.filmax.data.fake.FakeContentSourceRepository
 import com.filmax.data.fake.FakeIds
 import com.filmax.data.fake.FakeLatency
+import com.filmax.data.fake.FakeTorrentChoices
 import com.filmax.data.fake.FakeWatchlistRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -176,7 +177,7 @@ class DetailsScreenModelTest {
         watchlist = watchlist,
         cast = FakeCastRepository(backend),
         toggleWatchlist = ToggleWatchlistUseCase(watchlist),
-        sources = sources,
+        playback = DetailsPlayback(sources = sources, torrents = FakeTorrentChoices()),
     )
 
     private companion object {

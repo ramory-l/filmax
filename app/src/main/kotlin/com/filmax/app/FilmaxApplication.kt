@@ -22,6 +22,7 @@ import com.filmax.feature.onboarding.common.di.onboardingModule
 import com.filmax.feature.player.common.di.playerModule
 import com.filmax.feature.profile.common.di.profileModule
 import com.filmax.feature.search.common.di.searchFeatureModule
+import com.filmax.feature.torrents.common.di.torrentsFeatureModule
 import com.filmax.feature.tvlink.common.di.tvLinkFeatureModule
 import com.filmax.shared.domainUseCaseModule
 import com.filmax.shared.sharedDataModules
@@ -87,6 +88,7 @@ open class FilmaxApplication : Application() {
         profileModule,
         detailsModule,
         playerModule,
+        torrentsFeatureModule,
         feedbackFeatureModule,
         tvLinkFeatureModule,
         appModule,

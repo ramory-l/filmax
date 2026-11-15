@@ -21,6 +21,16 @@ class TelemetryTextTest {
     }
 
     @Test
+    fun `jackett key in a release link is masked`() {
+        val text = "Choose(link=http://127.0.0.1:9117/dl/nnmclub/?jackett_apikey=k3y&path=Q2ZESjhP&file=Shogun)"
+
+        val redacted = TelemetryText.redact(text)
+
+        assertFalse("k3y" in redacted, redacted)
+        assertTrue("jackett_apikey=***&path=Q2ZESjhP" in redacted, redacted)
+    }
+
+    @Test
     fun `request of a status error is its method and path without parameters`() {
         val text = """Client request(GET https://api.host/api/v1/items/new?type=movie&page=1) invalid: 404."""
 

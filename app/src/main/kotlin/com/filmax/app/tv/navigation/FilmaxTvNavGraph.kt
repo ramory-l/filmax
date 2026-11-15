@@ -53,6 +53,7 @@ import com.filmax.feature.profile.tv.navigation.tvProfileScreen
 import com.filmax.feature.search.tv.navigation.TvSearchRoute
 import com.filmax.feature.search.tv.navigation.tvFilmographyScreen
 import com.filmax.feature.search.tv.navigation.tvSearchScreen
+import com.filmax.feature.torrents.tv.navigation.tvTorrentsScreen
 import com.filmax.feature.tvlink.tv.TvLinkHost
 import com.filmax.feature.tvlink.tv.TvRemoteCard
 import kotlinx.serialization.Serializable
@@ -257,6 +258,8 @@ private fun NavGraphBuilder.tvDestinations(onCheckUpdates: () -> Unit) {
     tvDetailsScreen()
     // Фильмография человека — push-экран из деталей (тап по актёру/режиссёру).
     tvFilmographyScreen()
+    // Раздачи тайтла — push-экран из деталей; выбранная сменяется плеером.
+    tvTorrentsScreen()
     tvTrailerScreen()
     tvPlayerScreen()
 }

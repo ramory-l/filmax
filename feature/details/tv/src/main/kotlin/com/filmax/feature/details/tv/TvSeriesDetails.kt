@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.filmax.core.domain.catalog.model.Item
 import com.filmax.core.domain.catalog.model.MediaTrack
+import com.filmax.core.presentation.format.torrentButtonLabel
 import com.filmax.core.tv.designsystem.FxType
 import com.filmax.core.tv.designsystem.LocalFxColors
 import com.filmax.core.tv.designsystem.TvBackHint
@@ -174,5 +176,11 @@ private fun SeriesButtons(state: DetailsState, actions: DetailsActions, focus: S
         actions.onTrailer?.let { onTrailer ->
             TvIconButton(icon = Icons.Rounded.Movie, contentDescription = "Трейлер", onClick = onTrailer)
         }
+        // Раздачи — к той же серии, что запустит «Продолжить»: выбранная раздача сыграет её.
+        TvIconButton(
+            icon = Icons.Rounded.Download,
+            contentDescription = torrentButtonLabel(state.torrent),
+            onClick = { actions.onTorrents(play?.video) },
+        )
     }
 }

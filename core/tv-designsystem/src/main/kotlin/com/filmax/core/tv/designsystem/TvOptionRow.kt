@@ -111,7 +111,7 @@ fun TvOptionRow(
 
 /** Значок формата: «5.1», «HDR» — контуром, чтобы не спорить с отметкой выбора. */
 @Composable
-private fun FormatBadge(text: String) {
+internal fun FormatBadge(text: String) {
     Text(
         text,
         style = BadgeStyle,
@@ -123,7 +123,7 @@ private fun FormatBadge(text: String) {
 }
 
 @Composable
-private fun SelectionMark(selected: Boolean) {
+internal fun SelectionMark(selected: Boolean) {
     val colors = LocalFxColors.current
     if (selected) {
         Box(Modifier.size(MarkSize).background(colors.accent, CircleShape), contentAlignment = Alignment.Center) {

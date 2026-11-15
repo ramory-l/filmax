@@ -8,6 +8,7 @@ import com.filmax.core.domain.common.getOrNull
 import com.filmax.core.domain.person.CastRepository
 import com.filmax.core.domain.source.ContentSourceRepository
 import com.filmax.core.domain.source.capabilities
+import com.filmax.core.domain.torrent.TorrentChoices
 import com.filmax.core.domain.usecase.watching.ToggleWatchlistUseCase
 import com.filmax.core.domain.watchlist.WatchlistRepository
 import com.filmax.core.domain.watchlist.model.toWatchlistItem
@@ -25,12 +26,13 @@ class DetailsScreenModel(
     private val watchlist: WatchlistRepository,
     private val cast: CastRepository,
     private val toggleWatchlist: ToggleWatchlistUseCase,
-    sources: ContentSourceRepository,
+    playback: DetailsPlayback,
 ) : BaseScreenModel<DetailsState, DetailsSideEffect, DetailsEvent>(
-    DetailsState(foldersAvailable = sources.source.value.capabilities.folders),
+    DetailsState(foldersAvailable = playback.sources.source.value.capabilities.folders),
 ) {
 
     private val route = savedStateHandle.toRoute<DetailsRoute>()
+    private val torrents = playback.torrents
 
     /**
      * Запросы сезона: фокус на чипе применяется с задержкой ([DetailsEvent.SelectSeason]), стрелка
@@ -48,6 +50,7 @@ class DetailsScreenModel(
         onFetchData()
         observeFavoriteState()
         observeSeasonRequests()
+        observeTorrent()
     }
 
     override fun onEvent(event: DetailsEvent) {
@@ -113,6 +116,13 @@ class DetailsScreenModel(
         }
     }
 
+    /** Раздачу выбирают на соседнем экране: детали узнают о выборе, когда к ним возвращаются. */
+    private fun observeTorrent() {
+        screenModelScope {
+            torrents.observe(route.itemId).collect { chosen -> updateState { it.copy(torrent = chosen) } }
+        }
+    }
+
     private fun toggleFav() {
         val item = state.item ?: return
         screenModelScope { toggleWatchlist(item) }
@@ -132,3 +142,9 @@ private const val SEASON_SELECT_DELAY_MS = 250L
 
 /** Сезон [number], который применится, если за [delayMs] не придёт другой запрос. */
 private data class SeasonRequest(val number: Int, val delayMs: Long)
+
+/**
+ * Откуда тайтл играет: источник (от него зависят папки-закладки) и раздача, выбранная вместо него.
+ * Одним объектом — иначе конструктор [DetailsScreenModel] за порогом detekt.
+ */
+class DetailsPlayback(val sources: ContentSourceRepository, val torrents: TorrentChoices)

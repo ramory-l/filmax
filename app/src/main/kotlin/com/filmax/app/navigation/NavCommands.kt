@@ -31,6 +31,7 @@ import com.filmax.feature.search.common.navigation.BrowseRoute
 import com.filmax.feature.search.common.navigation.FilmographyRoute
 import com.filmax.feature.search.mobile.navigation.CatalogRoute
 import com.filmax.feature.search.mobile.navigation.SearchRoute
+import com.filmax.feature.torrents.common.navigation.TorrentsRoute
 import com.filmax.feature.tvlink.common.navigation.RemoteRoute
 import com.filmax.feature.tvlink.common.navigation.TvPickerRoute
 import org.koin.compose.koinInject
@@ -177,6 +178,8 @@ private fun Destination.toPhoneRoute(): Any = when (this) {
     is Destination.Filmography -> FilmographyRoute(name = name, isDirector = isDirector)
     is Destination.BookmarkFolder -> FolderRoute(folderId)
     is Destination.Browse -> BrowseRoute(section)
+    // Торренты пока только на ТВ: кнопки в деталях телефона нет, и открыть их нечем.
+    is Destination.Torrents -> error("$this пока не существует в телефонном графе")
     // Телефон как пульт телевизора: выбор ТВ и сам пульт.
     Destination.Remote -> RemoteRoute
     is Destination.TvPicker -> play?.toPickerRoute() ?: TvPickerRoute()
@@ -197,6 +200,13 @@ private fun RemoteCommand.Play.toPickerRoute() = TvPickerRoute(
     videoId = video.numberOrNone,
     season = video.seasonOrNone,
     startSeconds = startSeconds,
+)
+
+/** Выбор раздачи — пара чисел, как у плеера: видео, которое запустится из выбранной раздачи. */
+internal fun Destination.Torrents.toTorrentsRoute() = TorrentsRoute(
+    itemId = itemId,
+    season = video.seasonOrNone,
+    number = video.numberOrNone,
 )
 
 /**

@@ -51,6 +51,12 @@ sealed interface Destination {
         val startSeconds: Int = -1,
     ) : Destination
 
+    /**
+     * Раздачи тайтла с трекеров через TorrServer. [video] — что запустится из выбранной раздачи:
+     * серия с сезоном или видео фильма; null — плеер возьмёт продолжение или первое.
+     */
+    data class Torrents(val itemId: Int, val video: VideoRef? = null) : Destination
+
     data class Trailer(val url: String, val title: String) : Destination
 
     data class CollectionDetail(val collectionId: Int, val title: String) : Destination

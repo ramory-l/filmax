@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import com.filmax.core.domain.catalog.model.Item
 import com.filmax.core.presentation.format.isHighRating
 import com.filmax.core.presentation.format.posterMeta
 import com.filmax.core.presentation.format.ratingLabel
+import com.filmax.core.presentation.format.torrentButtonLabel
 import com.filmax.core.presentation.format.typeLabel
 import com.filmax.core.tv.designsystem.FxType
 import com.filmax.core.tv.designsystem.LocalFxColors
@@ -176,6 +178,13 @@ private fun MovieButtons(
         actions.onTrailer?.let { onTrailer ->
             TvButton("Трейлер", onClick = onTrailer, style = TvButtonStyle.Secondary, leadingIcon = Icons.Rounded.Movie)
         }
+        // Выбранная раздача подписана качеством: видно, что «Смотреть» пойдёт из неё.
+        TvButton(
+            torrentButtonLabel(state.torrent),
+            onClick = { actions.onTorrents(null) },
+            style = TvButtonStyle.Secondary,
+            leadingIcon = Icons.Rounded.Download,
+        )
     }
 }
 

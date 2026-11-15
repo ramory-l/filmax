@@ -2,6 +2,7 @@ package com.filmax.app.tv.navigation
 
 import com.filmax.app.navigation.GraphRoutes
 import com.filmax.app.navigation.toPlayerRoute
+import com.filmax.app.navigation.toTorrentsRoute
 import com.filmax.core.navigation.Destination
 import com.filmax.feature.collections.common.navigation.CollectionDetailRoute
 import com.filmax.feature.details.common.navigation.DetailsRoute
@@ -27,6 +28,7 @@ private fun Destination.toTvRoute(): Any = when (this) {
     Destination.DesignSystem -> error("DesignSystem не существует в ТВ-графе")
     is Destination.Details -> DetailsRoute(itemId)
     is Destination.Player -> toPlayerRoute()
+    is Destination.Torrents -> toTorrentsRoute()
     is Destination.Trailer -> TrailerRoute(url = url, title = title)
     is Destination.CollectionDetail -> CollectionDetailRoute(collectionId = collectionId, title = title)
     is Destination.Filmography -> FilmographyRoute(name = name, isDirector = isDirector)

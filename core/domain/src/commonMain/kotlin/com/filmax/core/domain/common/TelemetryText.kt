@@ -26,8 +26,12 @@ object TelemetryText {
     /** Строка крошки не длиннее [MAX_LINE]: лог Crashlytics ограничен 64 КБ на сессию. */
     fun line(text: String): String = redact(text).let { if (it.length > MAX_LINE) it.take(MAX_LINE) + "…" else it }
 
+    /**
+     * Ключи API — ещё и под своими именами: ссылки раздач от Jackett несут `jackett_apikey`, а
+     * ссылка попадает в события экрана торрентов и в ошибки запросов к TorrServer.
+     */
     private val SECRET_PARAM = Regex(
-        """\b(client_secret|code|device_code|access_token|refresh_token|password)=[^&\s\]),"]+""",
+        """\b(client_secret|code|device_code|access_token|refresh_token|password|\w*api_?key)=[^&\s\]),"]+""",
         RegexOption.IGNORE_CASE,
     )
 

@@ -34,6 +34,7 @@ kotlin {
                 export(project(":data:watching"))
                 export(project(":data:jellyfin"))
                 export(project(":data:source"))
+                export(project(":data:torrents"))
             }
         }
     }
@@ -51,6 +52,7 @@ kotlin {
             api(project(":data:watching"))
             api(project(":data:jellyfin"))
             api(project(":data:source"))
+            api(project(":data:torrents"))
 
             api(koinBom)
             api(libs.koin.core)

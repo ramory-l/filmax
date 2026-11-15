@@ -18,6 +18,7 @@ import com.filmax.data.catalog.di.catalogModule
 import com.filmax.data.jellyfin.di.jellyfinModule
 import com.filmax.data.search.di.searchModule
 import com.filmax.data.source.di.sourceModule
+import com.filmax.data.torrents.di.torrentsModule
 import com.filmax.data.user.di.userModule
 import com.filmax.data.watching.di.watchingModule
 import org.koin.core.KoinApplication
@@ -43,8 +44,9 @@ val domainUseCaseModule = module {
 }
 
 /**
- * Data-слой обоих источников. Порядок важен: [sourceModule] — последним, он занимает ключи без
- * квалификатора переключателями между kino.pub и домашним сервером.
+ * Data-слой обоих источников и раздач TorrServer. Порядок важен: [sourceModule] — последним, он
+ * занимает ключи без квалификатора переключателями между kino.pub и домашним сервером, а потокам
+ * подмешивает выбранную раздачу из [torrentsModule].
  */
 val sharedDataModules = listOf(
     authModule,
@@ -53,6 +55,7 @@ val sharedDataModules = listOf(
     userModule,
     watchingModule,
     jellyfinModule,
+    torrentsModule,
     sourceModule,
 )
 

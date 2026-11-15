@@ -161,6 +161,7 @@ class TvMovieDetailsFocusTest {
         onPlay = { video -> calls += "play ${video.seasonOrNone}/${video.numberOrNone}" },
         onToggleWatchLater = { calls += "watch later" },
         onTrailer = null,
+        onTorrents = {},
         onOpenItem = { id -> calls += "open $id" },
         onOpenPerson = { name, _ -> calls += "person $name" },
         onOpenDescription = { calls += "description" },
