@@ -33,6 +33,7 @@ kotlin {
                 export(project(":data:user"))
                 export(project(":data:watching"))
                 export(project(":data:jellyfin"))
+                export(project(":data:hub"))
                 export(project(":data:source"))
                 export(project(":data:torrents"))
             }
@@ -51,6 +52,7 @@ kotlin {
             api(project(":data:user"))
             api(project(":data:watching"))
             api(project(":data:jellyfin"))
+            api(project(":data:hub"))
             api(project(":data:source"))
             api(project(":data:torrents"))
 

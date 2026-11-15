@@ -74,7 +74,8 @@ internal fun TvOnboardingScreen(
             .background(TvSurface),
     ) {
         if (state.homeServer) {
-            TvHomeServerStep(onBack = { onEvent(OnboardingEvent.CloseHomeServer) })
+            val leave = { onEvent(OnboardingEvent.CloseHomeServer) }
+            TvHomeServerStep(onBack = leave.takeIf { state.canLeaveHomeServer })
             return@Box
         }
         AnimatedContent(

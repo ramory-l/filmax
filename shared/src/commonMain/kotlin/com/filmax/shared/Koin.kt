@@ -15,6 +15,7 @@ import com.filmax.core.network.di.platformNetworkModule
 import com.filmax.core.network.kinopub.kinopubNetworkModule
 import com.filmax.data.auth.di.authModule
 import com.filmax.data.catalog.di.catalogModule
+import com.filmax.data.hub.di.hubModule
 import com.filmax.data.jellyfin.di.jellyfinModule
 import com.filmax.data.search.di.searchModule
 import com.filmax.data.source.di.sourceModule
@@ -55,6 +56,7 @@ val sharedDataModules = listOf(
     userModule,
     watchingModule,
     jellyfinModule,
+    hubModule,
     torrentsModule,
     sourceModule,
 )

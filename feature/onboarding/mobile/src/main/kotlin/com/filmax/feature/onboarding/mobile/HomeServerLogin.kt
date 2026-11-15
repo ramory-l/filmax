@@ -31,24 +31,29 @@ import com.filmax.core.ui.components.FilmaxSettingsGroup
 import com.filmax.core.ui.components.FilmaxSettingsRow
 import com.filmax.core.ui.components.FilmaxTextButton
 import com.filmax.core.ui.components.FilmaxTextField
+import com.filmax.feature.onboarding.common.HUB_HINT
 import com.filmax.feature.onboarding.common.HomeServerEvent
 import com.filmax.feature.onboarding.common.HomeServerScreenModel
 import com.filmax.feature.onboarding.common.HomeServerSideEffect
 import com.filmax.feature.onboarding.common.HomeServerState
 import com.filmax.feature.onboarding.common.HomeServerStep
+import com.filmax.feature.onboarding.common.serverTitle
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
 /** Отступ шапки шага от верха: экран прокручивается, клавиатура поднимает поля над собой. */
 private val TopPadding = 48.dp
 
+private const val JELLYFIN_HINT = "Jellyfin в вашей сети: фильмы и сериалы из своей медиатеки, без подписки."
+
 /**
  * Вход на домашний сервер. «Назад» — шаг назад: со входа к выбору сервера, с выбора сервера —
- * к приветствию kino.pub ([onBack]).
+ * к приветствию kino.pub ([onBack]). В приложении хаба kino.pub нет — [onBack] null, и «Назад» на
+ * выборе сервера закрывает приложение, как на любом стартовом экране.
  */
 @Composable
 internal fun HomeServerLogin(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     screenModel: HomeServerScreenModel = koinViewModel(),
     navigator: Navigator = koinInject(),
 ) {
@@ -59,8 +64,8 @@ internal fun HomeServerLogin(
             HomeServerSideEffect.SignedIn -> navigator.root(Destination.Home)
         }
     }
-    BackHandler {
-        if (state.step == HomeServerStep.SERVER) onBack() else dispatch(HomeServerEvent.ChangeServer)
+    BackHandler(enabled = onBack != null || state.step != HomeServerStep.SERVER) {
+        if (state.step == HomeServerStep.SERVER) onBack?.invoke() else dispatch(HomeServerEvent.ChangeServer)
     }
     Column(
         Modifier
@@ -87,9 +92,9 @@ internal fun HomeServerLogin(
 @Composable
 private fun StepHeader(state: HomeServerState) {
     val server = state.server
-    val title = if (state.step == HomeServerStep.SERVER) "Домашний сервер" else server?.name ?: "Сервер"
+    val title = if (state.step == HomeServerStep.SERVER) serverTitle(state) else server?.name ?: "Сервер"
     val hint = when (state.step) {
-        HomeServerStep.SERVER -> "Jellyfin в вашей сети: фильмы и сериалы из своей медиатеки, без подписки."
+        HomeServerStep.SERVER -> if (state.hub) HUB_HINT else JELLYFIN_HINT
         HomeServerStep.CODE -> "Откройте Jellyfin на другом устройстве: Профиль → Quick Connect — и введите код."
         HomeServerStep.PASSWORD -> "Пользователь Jellyfin на этом сервере."
     }
@@ -98,7 +103,7 @@ private fun StepHeader(state: HomeServerState) {
 }
 
 @Composable
-private fun ServerChoice(state: HomeServerState, dispatch: (HomeServerEvent) -> Unit, onBack: () -> Unit) {
+private fun ServerChoice(state: HomeServerState, dispatch: (HomeServerEvent) -> Unit, onBack: (() -> Unit)?) {
     if (state.found.isNotEmpty()) {
         FilmaxSettingsGroup(title = "В этой сети") {
             state.found.forEachIndexed { index, server ->
@@ -115,7 +120,7 @@ private fun ServerChoice(state: HomeServerState, dispatch: (HomeServerEvent) -> 
     FilmaxTextField(
         value = state.address,
         onValueChange = { dispatch(HomeServerEvent.SetAddress(it)) },
-        placeholder = "192.168.1.20:8096",
+        placeholder = if (state.hub) "192.168.1.20:8097" else "192.168.1.20:8096",
         onDone = { dispatch(HomeServerEvent.Connect) },
         label = "Адрес сервера",
         keyboardType = KeyboardType.Uri,
@@ -130,7 +135,7 @@ private fun ServerChoice(state: HomeServerState, dispatch: (HomeServerEvent) -> 
         text = if (state.searching) "Ищем серверы…" else "Искать в сети снова",
         onClick = { dispatch(HomeServerEvent.Search) },
     )
-    FilmaxTextButton(text = "Войти в kino.pub", onClick = onBack)
+    onBack?.let { FilmaxTextButton(text = "Войти в kino.pub", onClick = it) }
 }
 
 @Composable

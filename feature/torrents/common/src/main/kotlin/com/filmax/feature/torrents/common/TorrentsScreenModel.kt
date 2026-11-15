@@ -8,12 +8,12 @@ import com.filmax.core.domain.catalog.model.VideoRef
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.source.ContentSourceRepository
-import com.filmax.core.domain.torrent.ChosenRelease
 import com.filmax.core.domain.torrent.TorrServerRepository
 import com.filmax.core.domain.torrent.TorrentChoices
-import com.filmax.core.domain.torrent.TorrentQuery
 import com.filmax.core.domain.torrent.TorrentRelease
 import com.filmax.core.domain.torrent.TorrentRepository
+import com.filmax.core.domain.torrent.toChosen
+import com.filmax.core.domain.torrent.torrentQuery
 import com.filmax.core.presentation.BaseScreenModel
 import com.filmax.core.presentation.input.erasedText
 import com.filmax.core.presentation.input.typedRaw
@@ -187,28 +187,14 @@ private fun subtitle(item: Item, video: VideoRef?): String {
 }
 
 /**
- * Запрос к трекерам: kino.pub пишет названия через « / » — русское и оригинальное, и трекеры
- * пишут оба, поэтому ищется каждое.
+ * Откуда тайтл играет без торрента — для кнопки «Играть с …». У хаба своих видео нет: всё играет
+ * из раздач, и возвращаться некуда.
  */
-internal fun Item.torrentQuery(): TorrentQuery = TorrentQuery(
-    names = title.split(" / ").map(String::trim).filter(String::isNotEmpty),
-    year = year.takeIf { it > 0 },
-    episodic = type.episodic,
-)
-
-private fun TorrentRelease.toChosen() = ChosenRelease(
-    link = link,
-    key = key,
-    title = title,
-    quality = traits.quality,
-    seasons = traits.seasons,
-)
-
-/** Откуда тайтл играет без торрента — для кнопки «Играть с …». */
-private val ContentSource.label: String
+private val ContentSource.label: String?
     get() = when (this) {
         ContentSource.KINOPUB -> "kino.pub"
         ContentSource.JELLYFIN -> "домашнего сервера"
+        ContentSource.HUB -> null
     }
 
 /** Адрес с портом и схемой — с запасом: «http://192.168.100.200:8090». */

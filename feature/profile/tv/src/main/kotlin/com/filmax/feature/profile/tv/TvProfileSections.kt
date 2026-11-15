@@ -39,10 +39,12 @@ import com.filmax.core.ui.components.FilmaxVersionLabel
 import com.filmax.feature.profile.common.ProfileEvent
 import com.filmax.feature.profile.common.ProfileSetting
 import com.filmax.feature.profile.common.ProfileState
+import com.filmax.feature.profile.common.accessCaption
 import com.filmax.feature.profile.common.activeUntil
 import com.filmax.feature.profile.common.daysLabel
 import com.filmax.feature.profile.common.initialsOrFallback
 import com.filmax.feature.profile.common.label
+import com.filmax.feature.profile.common.sourceChoice
 import com.filmax.feature.profile.common.subtitlesEnabled
 import com.filmax.feature.profile.common.valueOf
 
@@ -180,7 +182,7 @@ internal const val PLAIN_FOCUS_KEY = "plainFocus"
 private fun AccountRows(rows: SettingRows, enter: Int) {
     val actions = rows.actions
     SettingsGroup("Аккаунт")
-    rows.Value(ProfileSetting.SOURCE, enter = enter)
+    if (rows.state.sourceChoice) rows.Value(ProfileSetting.SOURCE, enter = enter)
     TvSettingRow(
         label = "Выйти из аккаунта",
         value = null,
@@ -240,7 +242,7 @@ private fun AccessCard(state: ProfileState, modifier: Modifier) {
         TvSubscriptionCard(
             overline = "Источник",
             value = state.source.label,
-            caption = "Своя медиатека, без подписки",
+            caption = state.source.accessCaption,
             modifier = modifier,
         )
     } else {

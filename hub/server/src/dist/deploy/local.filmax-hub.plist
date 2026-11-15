@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Шаблон LaunchAgent хаба: install.sh подставляет домашний каталог вместо @HOME@. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>local.filmax-hub</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/sh</string>
+    <string>@HOME@/services/filmax-hub/app/deploy/run.sh</string>
+  </array>
+  <key>WorkingDirectory</key><string>@HOME@/services/filmax-hub</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <!-- Упавший хаб (скажем, порт занят) launchd поднимает не чаще раза в 10 с — лог не разрастётся. -->
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>@HOME@/services/logs/local.filmax-hub.log</string>
+  <key>StandardErrorPath</key><string>@HOME@/services/logs/local.filmax-hub.log</string>
+</dict></plist>

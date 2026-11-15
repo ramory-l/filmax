@@ -23,9 +23,9 @@ import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
 /**
- * Контракты, которые экраны берут без квалификатора, — переключатели между kino.pub и домашним
- * сервером. Грузится ПОСЛЕ data-модулей обоих источников: занимает их ключи без квалификатора, а
- * реализации берёт по квалификатору [ContentSource].
+ * Контракты, которые экраны берут без квалификатора, — переключатели между kino.pub, домашним
+ * сервером и хабом. Грузится ПОСЛЕ data-модулей источников: занимает их ключи без квалификатора,
+ * а реализации берёт по квалификатору [ContentSource].
  */
 val sourceModule = module {
     single<ContentSourceRepository> { ContentSourceRepositoryImpl(settings = get()) }
@@ -38,8 +38,23 @@ val sourceModule = module {
     single<StreamRepository> { RoutingStreamRepository(switch(), torrents = get()) }
 }
 
+/**
+ * Выбор источника приложения «Filmax Торренты»: только хаб, без kino.pub и домашнего сервера.
+ * Грузится после [sourceModule] и перекрывает его выбор источника — остальные переключатели те же.
+ */
+val hubOnlySourceModule = module {
+    single<ContentSourceRepository> {
+        ContentSourceRepositoryImpl(settings = get(), available = listOf(ContentSource.HUB))
+    }
+}
+
+/**
+ * Реализации источников берутся лениво: в основном приложении модуль хаба есть, но источник
+ * недоступен — его реализации так и не создаются, и наоборот.
+ */
 private inline fun <reified T : Any> Scope.switch(): SourceSwitch<T> = SourceSwitch(
     sources = get(),
     kinopub = inject(named(ContentSource.KINOPUB)),
     homeServer = inject(named(ContentSource.JELLYFIN)),
+    hub = inject(named(ContentSource.HUB)),
 )

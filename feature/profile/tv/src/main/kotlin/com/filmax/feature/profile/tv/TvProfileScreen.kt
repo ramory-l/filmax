@@ -133,7 +133,7 @@ private val LogoutSpec = TvConfirmSpec(
 /** Панель вариантов открытой настройки; у палитры — кружки её цветов. */
 private fun optionSheet(state: ProfileState): TvOptionSheetState {
     val setting = state.setting
-    val labels = optionsOf(setting)
+    val labels = state.optionsOf(setting)
     val swatches = if (setting == ProfileSetting.PALETTE) ThemePalette.entries.map { it.toFxColors().accent } else null
     return TvOptionSheetState(
         overline = when (setting) {

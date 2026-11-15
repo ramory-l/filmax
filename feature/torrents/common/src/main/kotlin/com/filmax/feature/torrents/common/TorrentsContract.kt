@@ -14,8 +14,8 @@ data class TorrentsState(
     val title: String = "",
     /** Год и что запустится из раздачи: «2024 · серия S2E5». */
     val subtitle: String = "",
-    /** Откуда видео без торрента — подпись кнопки возврата: «kino.pub», «домашнего сервера». */
-    val sourceName: String = "",
+    /** Откуда видео без торрента — подпись кнопки возврата: «kino.pub»; null — у источника своих видео нет. */
+    val sourceName: String? = null,
     val server: TorrServer? = null,
     /** Набранный адрес TorrServer. */
     val address: String = "",

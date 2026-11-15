@@ -12,6 +12,11 @@ data class HomeServer(
     val version: String? = null,
     /** Сервер принимает вход по коду Quick Connect — на ТВ это вход без набора пароля пультом. */
     val quickConnect: Boolean = false,
+    /**
+     * Нужна ли учётная запись. У Jellyfin — да; хаб Filmax открыт домашней сети, и подключиться
+     * к нему — уже войти: шагов кода и пароля нет.
+     */
+    val accounts: Boolean = true,
 )
 
 /** Код Quick Connect: [code] показывают человеку, по [secret] устройство ждёт подтверждения. */
@@ -23,6 +28,9 @@ data class QuickConnectCode(val code: String, val secret: String)
  * пришлось бы растягивать под оба. Выход и признак входа — общие, через AuthRepository.
  */
 interface HomeServerRepository {
+
+    /** Источник, который даёт вход на этот сервер: после входа приложение переключается на него. */
+    val source: ContentSource
 
     /** Серверы, ответившие в локальной сети. Пусто — не нашлось (или роутер режет широковещание). */
     suspend fun discover(): List<HomeServer>

@@ -48,6 +48,7 @@ import com.filmax.feature.profile.common.ProfileScreenModel
 import com.filmax.feature.profile.common.ProfileSetting
 import com.filmax.feature.profile.common.ProfileSideEffect
 import com.filmax.feature.profile.common.ProfileState
+import com.filmax.feature.profile.common.sourceChoice
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -156,8 +157,10 @@ private fun ProfileColumn(state: ProfileState, actions: ProfileActions, modifier
         AppGroup(actions = actions)
         FilmaxSettingsGroup(title = "Аккаунт") {
             // Выход — из текущего источника: второй остаётся с входом.
-            SettingRow(state, ProfileSetting.SOURCE, Icons.Filled.Dns, actions.onEvent)
-            FilmaxSettingsDivider()
+            if (state.sourceChoice) {
+                SettingRow(state, ProfileSetting.SOURCE, Icons.Filled.Dns, actions.onEvent)
+                FilmaxSettingsDivider()
+            }
             FilmaxSettingsRow(
                 Icons.AutoMirrored.Filled.Logout,
                 "Выйти",

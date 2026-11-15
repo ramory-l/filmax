@@ -93,9 +93,10 @@ private fun FilterChips(
 @Composable
 internal fun ReleaseActions(state: TorrentsState, onEvent: (TorrentsEvent) -> Unit) {
     Row(Modifier.tvFocusGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (state.chosen != null) {
+        val sourceName = state.sourceName
+        if (state.chosen != null && sourceName != null) {
             TvChip(
-                label = "Играть с ${state.sourceName}",
+                label = "Играть с $sourceName",
                 selected = false,
                 onClick = { onEvent(TorrentsEvent.UseSource) },
                 style = TvChipStyle.Outlined,

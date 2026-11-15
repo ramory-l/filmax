@@ -7,7 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Выбор источника в памяти — для юнит-тестов ScreenModel'ей. */
-class FakeContentSourceRepository(initial: ContentSource = ContentSource.KINOPUB) : ContentSourceRepository {
+class FakeContentSourceRepository(
+    initial: ContentSource = ContentSource.KINOPUB,
+    override val available: List<ContentSource> = listOf(ContentSource.KINOPUB, ContentSource.JELLYFIN),
+) : ContentSourceRepository {
 
     private val state = MutableStateFlow(initial)
 

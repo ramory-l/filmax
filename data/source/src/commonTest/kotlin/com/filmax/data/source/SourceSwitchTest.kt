@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
 /** Переключатель источника: запрос — в выбранный источник, поток — следом за выбором. */
@@ -29,6 +30,7 @@ class SourceSwitchTest {
             homeServerCreated = true
             Backend("server", homeServerAuth)
         },
+        hub = lazy { Backend("hub", MutableStateFlow(true)) },
     )
 
     @Test
@@ -57,6 +59,28 @@ class SourceSwitchTest {
 
         assertEquals(listOf(true, false), seen)
         assertEquals(false, switch.flow { it.signedIn }.first())
+    }
+
+    @Test
+    fun `hub app has only the hub and ignores a choice stored by another build`() {
+        settings.putString("content_source", ContentSource.JELLYFIN.name)
+
+        val hubOnly = ContentSourceRepositoryImpl(settings, available = listOf(ContentSource.HUB))
+        val hubSwitch = SourceSwitch(
+            sources = hubOnly,
+            kinopub = lazy<Backend> { error("kino.pub в приложении хаба не создаётся") },
+            homeServer = lazy<Backend> { error("Сервер в приложении хаба не создаётся") },
+            hub = lazy { Backend("hub", MutableStateFlow(true)) },
+        )
+
+        assertEquals(ContentSource.HUB, hubOnly.source.value)
+        assertEquals("hub", hubSwitch.current.name)
+    }
+
+    @Test
+    fun `main app does not offer the hub`() = runTest {
+        assertEquals(listOf(ContentSource.KINOPUB, ContentSource.JELLYFIN), sources.available)
+        assertFailsWith<IllegalArgumentException> { sources.select(ContentSource.HUB) }
     }
 
     private class Backend(val name: String, val signedIn: MutableStateFlow<Boolean>)

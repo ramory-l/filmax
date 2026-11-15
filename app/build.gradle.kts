@@ -32,6 +32,7 @@ if (googleServicesConfig.exists()) {
         "Demo" to "com.filmax.app.demo",
         "Mock" to "com.filmax.app.mock",
         "Benchmark" to "com.filmax.app.bench",
+        "Tor" to "com.filmax.app.tor",
         "Release" to "com.filmax.app",
     )
     val unregisteredVariants = variantPackages.filterValues { it !in registeredPackages }.keys
@@ -179,6 +180,18 @@ android {
             matchingFallbacks += "release"
             proguardFiles("benchmark-rules.pro")
         }
+        // «Filmax Торренты» — второе приложение рядом с основным: те же экраны, но источник один — свой
+        // хаб на компьютере (TMDB-витрина, видео из раздач), без kino.pub и Jellyfin. Свой пакет и
+        // метка — на ТВ две иконки, у каждой свой вход и своя история. Подпись — боевая, если ключ есть,
+        // иначе debug: сборку без секретов всё равно можно поставить на эмулятор.
+        create("tor") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".tor"
+            versionNameSuffix = "-tor"
+            matchingFallbacks += "release"
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
+                ?: signingConfigs.getByName("debug")
+        }
     }
 
     // Benchmark берёт подмену Application и строки из mock — фейковый data-слой у них общий.
@@ -233,6 +246,8 @@ dependencies {
     implementation(project(":data:source"))
     // Раздачи через TorrServer: второй способ посмотреть тайтл любого источника.
     implementation(project(":data:torrents"))
+    // Свой хаб на компьютере — единственный источник сборки «Filmax Торренты» (src/tor).
+    implementation(project(":data:hub"))
     // Общий с iOS состав data-модулей и use case'ов: один список на обе платформы.
     implementation(project(":shared"))
     // Фейки только в сборке mock: main-код о них не знает, подключает MockFilmaxApplication.

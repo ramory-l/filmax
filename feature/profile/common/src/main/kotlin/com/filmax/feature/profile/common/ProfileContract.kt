@@ -13,6 +13,8 @@ data class ProfileState(
     val palette: ThemePalette = ThemePalette.VIOLET,
     /** Откуда каталог и видео: kino.pub или домашний сервер. */
     val source: ContentSource = ContentSource.KINOPUB,
+    /** Из каких источников можно выбирать; один — строки выбора нет вовсе (приложение хаба). */
+    val sources: List<ContentSource> = listOf(ContentSource.KINOPUB, ContentSource.JELLYFIN),
     /** Фокус на ТВ без белой обводки и свечения (см. ThemeSettingsRepository.plainFocus). */
     val plainFocus: Boolean = false,
     /**

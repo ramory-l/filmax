@@ -1,11 +1,13 @@
 package com.filmax.data.torrents.di
 
 import com.filmax.core.domain.torrent.TorrServerRepository
+import com.filmax.core.domain.torrent.TorrentAutoChoice
 import com.filmax.core.domain.torrent.TorrentChoices
 import com.filmax.core.domain.torrent.TorrentRepository
 import com.filmax.core.domain.torrent.TorrentStreams
 import com.filmax.data.torrents.TorrServerRepositoryImpl
 import com.filmax.data.torrents.TorrServerStore
+import com.filmax.data.torrents.TorrentAutoChoiceImpl
 import com.filmax.data.torrents.TorrentChoicesImpl
 import com.filmax.data.torrents.TorrentRepositoryImpl
 import com.filmax.data.torrents.TorrentStreamsImpl
@@ -30,4 +32,5 @@ val torrentsModule = module {
     single<TorrentRepository> { TorrentRepositoryImpl(api = get(), store = get()) }
     single<TorrentChoices> { TorrentChoicesImpl(settings = get()) }
     single<TorrentStreams> { TorrentStreamsImpl(choices = get(), torrents = get(), store = get()) }
+    single<TorrentAutoChoice> { TorrentAutoChoiceImpl(torrents = get(), choices = get()) }
 }

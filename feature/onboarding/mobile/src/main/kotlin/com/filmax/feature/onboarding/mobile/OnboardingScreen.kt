@@ -70,7 +70,8 @@ internal fun OnboardingScreen(
             .background(FilmaxTheme.palette.background),
     ) {
         if (state.homeServer) {
-            HomeServerLogin(onBack = { onEvent(OnboardingEvent.CloseHomeServer) })
+            val leave = { onEvent(OnboardingEvent.CloseHomeServer) }
+            HomeServerLogin(onBack = leave.takeIf { state.canLeaveHomeServer })
             return@Box
         }
         AnimatedContent(

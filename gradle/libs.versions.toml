@@ -90,6 +90,14 @@ ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref =
 ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
 # Сырые TCP-сокеты на корутинах (KMP): связь телефона с ТВ в локальной сети (data:tvlink)
 ktor-network = { group = "io.ktor", name = "ktor-network", version.ref = "ktor" }
+# Ktor-сервер: Filmax Hub на Маке (hub:server) — витрина TMDB и подбор раздач
+ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
+ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio", version.ref = "ktor" }
+ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor" }
+ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
+# Логи Ktor-сервера в stdout: без провайдера SLF4J сервер молчит, а LaunchAgent пишет stdout в лог
+slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version = "2.0.16" }
 
 # Multiplatform settings (KMP storage)
 multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settings", version.ref = "multiplatform-settings" }

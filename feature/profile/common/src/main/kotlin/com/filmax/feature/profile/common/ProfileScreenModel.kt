@@ -3,7 +3,6 @@ package com.filmax.feature.profile.common
 import com.filmax.core.domain.auth.AuthRepository
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.settings.ThemePalette
-import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.user.UserRepository
 import com.filmax.core.presentation.BaseScreenModel
 
@@ -33,7 +32,9 @@ class ProfileScreenModel(
 
     private fun observeSource() {
         screenModelScope {
-            sources.source.collect { source -> updateState { it.copy(source = source) } }
+            sources.source.collect { source ->
+                updateState { it.copy(source = source, sources = sources.available) }
+            }
         }
     }
 
@@ -93,7 +94,7 @@ class ProfileScreenModel(
     private fun chooseOption(index: Int) {
         screenModelScope {
             val current = state
-            val option = optionsOf(current.setting).getOrNull(index) ?: return@screenModelScope
+            val option = current.optionsOf(current.setting).getOrNull(index) ?: return@screenModelScope
             updateState { it.copy(settingOpen = false) }
             when (current.setting) {
                 ProfileSetting.QUALITY -> playbackSettings.setQuality(option)
@@ -101,7 +102,7 @@ class ProfileScreenModel(
                 ProfileSetting.SUBTITLES -> playbackSettings.setSubtitleLanguage(option)
                 ProfileSetting.PALETTE -> themeSettings.setPalette(ThemePalette.entries[index])
                 // Граф сам вернётся к корню нового источника (или ко входу, если на него не входили).
-                ProfileSetting.SOURCE -> sources.select(ContentSource.entries[index])
+                ProfileSetting.SOURCE -> sources.select(current.sources[index])
             }
         }
     }

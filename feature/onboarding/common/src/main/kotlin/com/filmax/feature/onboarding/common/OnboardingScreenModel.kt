@@ -11,13 +11,17 @@ private const val MILLIS_PER_SECOND = 1000L
 
 /**
  * Вход в kino.pub по коду устройства — и развилка на вход в домашний сервер. Если источник уже
- * домашний сервер (выбрали в Профиле или вышли из него), экран сразу открывается на сервере.
+ * сервер (выбрали в Профиле или вышли из него), экран сразу открывается на сервере. В приложении
+ * хаба kino.pub нет: экран — сразу вход на хаб, и вернуться с него некуда.
  */
 class OnboardingScreenModel(
     private val auth: AuthRepository,
     private val sources: ContentSourceRepository,
 ) : BaseScreenModel<OnboardingState, OnboardingSideEffect, OnboardingEvent>(
-    OnboardingState(homeServer = sources.source.value == ContentSource.JELLYFIN),
+    OnboardingState(
+        homeServer = sources.source.value != ContentSource.KINOPUB,
+        canLeaveHomeServer = ContentSource.KINOPUB in sources.available,
+    ),
 ) {
 
     override fun onEvent(event: OnboardingEvent) {
@@ -25,10 +29,15 @@ class OnboardingScreenModel(
             OnboardingEvent.Login -> login()
             OnboardingEvent.RetryDeviceCode -> retryDeviceCode()
             OnboardingEvent.OpenHomeServer -> screenModelScope { updateState { it.copy(homeServer = true) } }
-            OnboardingEvent.CloseHomeServer -> screenModelScope {
-                sources.select(ContentSource.KINOPUB)
-                updateState { it.copy(homeServer = false) }
-            }
+            OnboardingEvent.CloseHomeServer -> closeHomeServer()
+        }
+    }
+
+    private fun closeHomeServer() {
+        if (!state.canLeaveHomeServer) return
+        screenModelScope {
+            sources.select(ContentSource.KINOPUB)
+            updateState { it.copy(homeServer = false) }
         }
     }
 

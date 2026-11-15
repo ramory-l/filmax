@@ -45,10 +45,15 @@ include(":data:feedback")
 include(":data:tvlink")
 // Домашний медиасервер Jellyfin: своя медиатека в локальной сети вместо kino.pub.
 include(":data:jellyfin")
+// Filmax Hub — свой сервер вместо kino.pub (клиент; сервер и протокол — в :hub).
+include(":data:hub")
 // Раздачи с трекеров через TorrServer: поиск, выбор по качеству и озвучке, поток серии.
 include(":data:torrents")
 // Переключатель источника: экраны получают репозитории kino.pub или домашнего сервера.
 include(":data:source")
+// Filmax Hub — свой сервер на Маке вместо kino.pub: протокол общий с приложением, сервер — JVM
+include(":hub:protocol")
+include(":hub:server")
 // Фейковый data-слой без сети: сборка `mock` и юнит-тесты ScreenModel'ей.
 include(":data:fake")
 

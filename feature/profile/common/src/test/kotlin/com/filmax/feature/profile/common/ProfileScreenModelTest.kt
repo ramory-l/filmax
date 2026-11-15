@@ -67,7 +67,8 @@ class ProfileScreenModelTest {
         assertTrue(model.states.value.settingOpen)
         assertEquals(ProfileSetting.QUALITY, model.states.value.setting)
 
-        model.dispatch(ProfileEvent.ChooseOption(optionsOf(ProfileSetting.QUALITY).indexOf("1080p")))
+        val quality = model.states.value.optionsOf(ProfileSetting.QUALITY).indexOf("1080p")
+        model.dispatch(ProfileEvent.ChooseOption(quality))
         advanceUntilIdle()
 
         assertFalse(model.states.value.settingOpen, "панель не закрылась после выбора")
@@ -163,7 +164,8 @@ class ProfileScreenModelTest {
         assertEquals("kino.pub", model.states.value.valueOf(ProfileSetting.SOURCE))
 
         model.dispatch(ProfileEvent.OpenSetting(ProfileSetting.SOURCE))
-        model.dispatch(ProfileEvent.ChooseOption(optionsOf(ProfileSetting.SOURCE).indexOf("Домашний сервер")))
+        val homeServer = model.states.value.optionsOf(ProfileSetting.SOURCE).indexOf("Домашний сервер")
+        model.dispatch(ProfileEvent.ChooseOption(homeServer))
         advanceUntilIdle()
 
         assertEquals(ContentSource.JELLYFIN, sources.source.value)

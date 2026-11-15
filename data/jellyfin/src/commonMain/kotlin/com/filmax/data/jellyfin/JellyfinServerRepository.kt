@@ -3,6 +3,7 @@ package com.filmax.data.jellyfin
 import com.filmax.core.domain.common.RequestResult
 import com.filmax.core.domain.common.getOrNull
 import com.filmax.core.domain.common.safeRequest
+import com.filmax.core.domain.source.ContentSource
 import com.filmax.core.domain.source.HomeServer
 import com.filmax.core.domain.source.HomeServerRepository
 import com.filmax.core.domain.source.QuickConnectCode
@@ -15,6 +16,8 @@ internal class JellyfinServerRepository(
     private val session: JellyfinSession,
     private val discovery: JellyfinDiscovery,
 ) : HomeServerRepository {
+
+    override val source: ContentSource = ContentSource.JELLYFIN
 
     override suspend fun discover(): List<HomeServer> = discovery.find().mapNotNull { found ->
         val address = found.address?.let(::normalizeAddress) ?: return@mapNotNull null
