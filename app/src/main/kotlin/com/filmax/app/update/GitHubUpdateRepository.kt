@@ -13,13 +13,15 @@ import java.net.URL
 
 /** Частичный DTO релиза GitHub — только поля, нужные для обновления. */
 @Serializable
-private data class ReleaseDto(
+internal data class ReleaseDto(
     @SerialName("tag_name") val tagName: String = "",
+    @SerialName("draft") val draft: Boolean = false,
+    @SerialName("prerelease") val prerelease: Boolean = false,
     @SerialName("assets") val assets: List<AssetDto> = emptyList(),
 )
 
 @Serializable
-private data class AssetDto(
+internal data class AssetDto(
     @SerialName("name") val name: String = "",
     /** API-URL ассета: с токеном отдаёт файл и из приватного репозитория. */
     @SerialName("url") val url: String = "",
@@ -28,7 +30,10 @@ private data class AssetDto(
 
 /**
  * Обновления приложения из GitHub Releases: релизный CI публикует `filmax-X.Y.Z.apk` на каждый
- * тег vX.Y.Z, здесь мы читаем `releases/latest`, сравниваем с установленной версией и качаем APK.
+ * тег vX.Y.Z, а `plenka-X.Y.Z.apk` — на plenka-vX.Y.Z. Здесь мы берём свежий релиз своего
+ * приложения по префиксу тега (`BuildConfig.UPDATE_TAG_PREFIX`), сравниваем с установленной
+ * версией и качаем APK. `releases/latest` не годится: «последний» релиз у GitHub один на весь
+ * репозиторий, а приложений в нём два.
  *
  * HTTP — голый [HttpURLConnection], а не Ktor из core:network: тому нужен весь стек kino.pub
  * (авторизация, refresh-токены), а здесь два запроса к чужому хосту без общего состояния.
@@ -46,7 +51,7 @@ class GitHubUpdateRepository(
     /** Свежий релиз, если он новее установленной версии; null — обновляться не на что. */
     suspend fun latestUpdate(): UpdateInfo? = withContext(ioDispatcher) {
         runCatching { fetchLatestRelease() }.getOrNull()?.let { release ->
-            val version = release.tagName.removePrefix("v")
+            val version = release.tagName.removePrefix(BuildConfig.UPDATE_TAG_PREFIX)
             val apk = release.assets.firstOrNull { it.name.endsWith(".apk") } ?: return@let null
             if (!isNewer(candidate = version, current = BuildConfig.VERSION_NAME)) return@let null
             UpdateInfo(version = version, assetUrl = apk.url, sizeBytes = apk.size)
@@ -93,12 +98,12 @@ class GitHubUpdateRepository(
         }
 
     private fun fetchLatestRelease(): ReleaseDto? {
-        val url = "https://api.github.com/repos/${BuildConfig.UPDATE_GITHUB_REPO}/releases/latest"
+        val url = "https://api.github.com/repos/${BuildConfig.UPDATE_GITHUB_REPO}/releases?per_page=$RELEASES_PAGE"
         val connection = openConnection(url, accept = ACCEPT_GITHUB_JSON, authorized = true)
         return try {
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return null
             val body = connection.inputStream.bufferedReader().use { it.readText() }
-            json.decodeFromString<ReleaseDto>(body)
+            json.decodeFromString<List<ReleaseDto>>(body).latestFor(BuildConfig.UPDATE_TAG_PREFIX)
         } finally {
             connection.disconnect()
         }
@@ -123,9 +128,23 @@ class GitHubUpdateRepository(
         const val ACCEPT_BINARY = "application/octet-stream"
         const val TIMEOUT_MS = 15_000
         const val COPY_BUFFER_BYTES = 64 * 1024
+
+        /** Сколько последних релизов смотреть: свой найдётся, даже если чужих вышло несколько подряд. */
+        const val RELEASES_PAGE = 30
         val REDIRECT_CODES = 300..399
     }
 }
+
+/**
+ * Свежий опубликованный релиз приложения с тегом [tagPrefix]: GitHub отдаёт список от новых к
+ * старым. После префикса нужна цифра — иначе `v` поймал бы и чужой тег, начинающийся на «v».
+ */
+internal fun List<ReleaseDto>.latestFor(tagPrefix: String): ReleaseDto? = firstOrNull { release ->
+    val published = !release.draft && !release.prerelease
+    published && release.tagName.startsWith(tagPrefix) && release.tagName.removePrefix(tagPrefix).startsWithDigit()
+}
+
+private fun String.startsWithDigit(): Boolean = firstOrNull()?.isDigit() == true
 
 /**
  * Сравнение версий `X.Y.Z`: true, когда [candidate] новее [current]. Суффиксы сборок
